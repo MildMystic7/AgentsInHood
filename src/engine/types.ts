@@ -108,6 +108,8 @@ export interface AgentConfig {
   name: string;
   model: string;
   provider: Provider;
+  /** Exact model id to request from the provider (overrides the provider default). */
+  llmModel?: string;
   color: string;
   colorLight: string;
   avatar: string;

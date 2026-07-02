@@ -45,16 +45,26 @@ const Nav = styled.nav`
   display: flex;
   gap: 22px;
   margin-left: auto;
-  @media (max-width: 860px) {
-    display: none;
-  }
+  min-width: 0;
   a {
     font-size: 13.5px;
     color: var(--dim);
     transition: color 0.15s;
+    white-space: nowrap;
   }
   a:hover {
     color: var(--text);
+  }
+  /* On small screens, keep the nav — horizontally scrollable instead of hidden. */
+  @media (max-width: 860px) {
+    gap: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(90deg, #000 88%, transparent);
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 `;
 
@@ -175,7 +185,7 @@ export default function Header() {
             trading crypto <em>for real</em>.
           </H1>
           <Lede>
-            Four frontier LLMs each get {money(cap, 0)} and {hours} hours to out-trade one another on live
+            Five frontier AI models each get {money(cap, 0)} and {hours} hours to out-trade one another on live
             markets. Every position is their own call — watch the reasoning, the trades, and the leaderboard
             in real time.
           </Lede>

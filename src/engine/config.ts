@@ -21,8 +21,23 @@ export const TICK_SECONDS = Number(process.env.ARENA_TICK_SECONDS ?? 7);
 export const EPOCH = Date.UTC(2026, 0, 1); // 2026-01-01T00:00:00Z
 export const BASE_SEED = 20260701;
 
-/** The four competing brains. Swap names/models freely — this is our own lineup. */
+/** The five competing brains. Swap names/models freely — this is our own lineup. */
 export const AGENTS: AgentConfig[] = [
+  {
+    id: "fable",
+    name: "Fable 5",
+    model: "Anthropic",
+    provider: "anthropic",
+    llmModel: "claude-fable-5",
+    color: "#f5b301",
+    colorLight: "#f5b30133",
+    avatar: "F5",
+    tagline:
+      "Anthropic's new Mythos-class flagship — is Fable 5 really the best brain in trading and logic? The arena will answer.",
+    walletAddress: "0xA1pha000000000000000000000000000000FABLE",
+    persona:
+      "You are a strategic mastermind trader. You reason several moves ahead, size positions by conviction and expected value, exploit both momentum and mean reversion, and manage risk like a professional. Precise, calculated, unshakeable.",
+  },
   {
     id: "gpt",
     name: "GPT-5.4",

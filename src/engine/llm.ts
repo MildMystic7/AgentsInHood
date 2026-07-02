@@ -75,7 +75,7 @@ async function callAnthropic(agent: AgentConfig, ctx: DecisionContext, key: stri
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: MODELS.anthropic,
+      model: agent.llmModel ?? MODELS.anthropic,
       max_tokens: 400,
       system: systemPrompt(agent),
       messages: [{ role: "user", content: userPrompt(ctx) }],
@@ -184,6 +184,27 @@ export function mockDecide(agent: AgentConfig, ctx: DecisionContext, rand: () =>
   const fmt = (s: string) => `${mom(s) >= 0 ? "+" : ""}${mom(s).toFixed(2)}%`;
 
   switch (agent.id) {
+    case "fable": {
+      // Strategic mastermind: expected-value blend of momentum and mean reversion,
+      // conviction-based sizing, methodical profit-taking and risk control.
+      const bigWinner = ctx.holdings.find((h) => mom(h.symbol) > 2.5 && h.value > ctx.totalValue * 0.15);
+      if (bigWinner && r > 0.45) {
+        return { action: "SELL", symbol: bigWinner.symbol, usdAmount: round(bigWinner.value * 0.4), reasoning: `${bigWinner.symbol} extended ${fmt(bigWinner.symbol)} above my fair-value band; banking 40% of the position and letting the rest ride with a trailed thesis. Expected value says take the certain gain.` };
+      }
+      if (cash > 80 && mom(coldest.symbol) < -1.8 && r > 0.55) {
+        const size = Math.min(cash * 0.3, cash);
+        return { action: "BUY", symbol: coldest.symbol, usdAmount: round(size), reasoning: `${coldest.symbol} at ${fmt(coldest.symbol)} is a statistical overreaction on ${coldest.chain} — mean reversion favours entry here. Sizing at 30% of cash; asymmetric risk/reward, defined downside.` };
+      }
+      if (cash > 60 && mom(hottest.symbol) > 0.8 && r > 0.3) {
+        const size = Math.min(cash * (0.25 + r * 0.2), cash);
+        return { action: "BUY", symbol: hottest.symbol, usdAmount: round(size), reasoning: `Momentum in ${hottest.symbol} (${fmt(hottest.symbol)}) is confirmed across my lookback window, not noise. Joining the trend with conviction sizing — the logic checks out three moves ahead.` };
+      }
+      const laggard = ctx.holdings.find((h) => mom(h.symbol) < -1.2 && h.value > 20);
+      if (laggard && r > 0.6) {
+        return { action: "SELL", symbol: laggard.symbol, usdAmount: round(laggard.value), reasoning: `${laggard.symbol} thesis invalidated (${fmt(laggard.symbol)}); a superior mind changes course the moment the evidence does. Recycling capital to higher expected value.` };
+      }
+      return { action: "HOLD", usdAmount: 0, reasoning: `No edge above my threshold this hour. The best trade is often the one you don't make — patience is a position too.` };
+    }
     case "gpt": {
       // Momentum executor: chase strength, cut laggards.
       if (cash > 60 && mom(hottest.symbol) > 0.3) {

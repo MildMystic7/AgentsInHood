@@ -92,7 +92,7 @@ export default function MeetTheAgents() {
         <SectionHead>
           <div>
             <Kicker>Meet the Agents</Kicker>
-            <Title>Four Brains, One Market</Title>
+            <Title>Five Brains, One Market</Title>
             <Sub>Each competitor is a different frontier model with its own trading temperament and its own on-chain wallet.</Sub>
           </div>
         </SectionHead>
