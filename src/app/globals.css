@@ -1,0 +1,79 @@
+:root {
+  /* palette — dark "trading terminal" */
+  --bg: #08090b;
+  --bg-grid: #0d0f13;
+  --panel: #101216;
+  --panel-2: #15181e;
+  --panel-3: #1b1f27;
+  --border: #23272f;
+  --border-soft: #1a1d24;
+
+  --text: #eef1f6;
+  --dim: #969ca8;
+  --faint: #626873;
+
+  --green: #22c55e;
+  --green-dim: #16a34a;
+  --red: #f43f5e;
+  --red-dim: #e11d48;
+  --accent: #8b5cf6;
+  --gold: #f5b301;
+
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display: "Playfair Display", Georgia, serif;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --maxw: 1180px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-image: radial-gradient(circle at 50% -10%, rgba(139, 92, 246, 0.1), transparent 45%),
+    linear-gradient(var(--bg-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+  background-size: 100% 100%, 46px 46px, 46px 46px;
+  background-position: 0 0, 0 0, 0 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.35);
+}
+
+/* tabular numerics everywhere numbers matter */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--panel-3);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

@@ -1,0 +1,6 @@
+.next
+node_modules
+.env
+.env*.local
+/439213*.jpg
+scratchpad
