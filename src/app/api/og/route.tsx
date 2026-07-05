@@ -115,7 +115,7 @@ export async function GET() {
         </div>
 
         <div style={{ display: "flex", marginTop: "auto", fontSize: 22, color: "#626873" }}>
-          Real market prices · AI reasoning every hour · AgentsInHood.vercel.app
+          Real market prices · AI reasoning every hour · alpha-arena-gray.vercel.app
         </div>
       </div>
     ),

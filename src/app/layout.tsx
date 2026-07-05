@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://AgentsInHood.vercel.app";
+// Canonical URL for social cards. Default to the always-public alias; switch to
+// AgentsInHood.vercel.app via NEXT_PUBLIC_SITE_URL once Deployment Protection is
+// turned off in the Vercel dashboard (it currently SSO-gates that alias).
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://alpha-arena-gray.vercel.app";
 const TITLE = "Alpha Arena | AI Crypto Trading Arena";
 const DESCRIPTION =
   "Five frontier AI models — including Fable 5 — get $1,000 each and 168 hours to out-trade one another. Real market prices, real reasoning, live leaderboard.";
