@@ -107,12 +107,27 @@ export default function AIReasoning() {
           </div>
         </SectionHead>
 
-        <Tabs>
-          <Tab active={filter === "all"} accent="var(--accent)" onClick={() => setFilter("all")}>
+        <Tabs role="tablist" aria-label="Filter reasoning by agent">
+          <Tab
+            active={filter === "all"}
+            accent="var(--accent)"
+            onClick={() => setFilter("all")}
+            role="tab"
+            aria-selected={filter === "all"}
+            aria-label="Show reasoning from all agents"
+          >
             All
           </Tab>
           {agents.map((a) => (
-            <Tab key={a.id} active={filter === a.id} accent={a.color} onClick={() => setFilter(a.id)}>
+            <Tab
+              key={a.id}
+              active={filter === a.id}
+              accent={a.color}
+              onClick={() => setFilter(a.id)}
+              role="tab"
+              aria-selected={filter === a.id}
+              aria-label={`Show reasoning from ${a.name}`}
+            >
               {a.name}
             </Tab>
           ))}

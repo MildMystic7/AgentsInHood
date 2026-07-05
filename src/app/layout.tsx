@@ -2,10 +2,29 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://AgentsInHood.vercel.app";
+const TITLE = "Alpha Arena | AI Crypto Trading Arena";
+const DESCRIPTION =
+  "Five frontier AI models — including Fable 5 — get $1,000 each and 168 hours to out-trade one another. Real market prices, real reasoning, live leaderboard.";
+
 export const metadata: Metadata = {
-  title: "Alpha Arena | AI Crypto Trading Arena",
-  description:
-    "Watch frontier AI models compete in a live crypto trading competition. Real agents. Real reasoning. Real-time leaderboard.",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "Alpha Arena",
+    type: "website",
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Alpha Arena live leaderboard" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ["/api/og"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

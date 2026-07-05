@@ -1,10 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import styled from "@emotion/styled";
-import { useAppSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectAgent } from "@/store/uiSlice";
 import { Container, Section, SectionHead, Kicker, Title, Sub, Panel, Avatar, LiveDot } from "./ui";
 import { money, pct, signColor } from "@/lib/format";
 import Sparkline from "./Sparkline";
+import ArenaEvents from "./ArenaEvents";
 
 const Wrap = styled(Panel)`
   overflow: hidden;
@@ -22,6 +25,8 @@ const Row = styled.div<{ head?: boolean; accent?: string; lead?: boolean }>`
   ${(p) =>
     p.head &&
     `font-family: var(--font-mono); font-size: 10.5px; letter-spacing:0.12em; text-transform:uppercase; color: var(--faint); background: var(--panel-2);`}
+  ${(p) => !p.head && "cursor: pointer; transition: background 0.15s;"}
+  ${(p) => !p.head && "&:hover { background: var(--panel-3); }"}
   &:last-of-type { border-bottom: none; }
   @media (max-width: 860px) {
     grid-template-columns: 34px 1.4fr 1fr 0.9fr 96px;
@@ -62,9 +67,36 @@ const Rank = styled.div<{ i: number }>`
   color: ${(p) => (p.i === 0 ? "var(--gold)" : "var(--dim)")};
 `;
 
+const Delta = styled.span<{ d: number }>`
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 5px;
+  color: ${(p) => (p.d > 0 ? "var(--green)" : p.d < 0 ? "var(--red)" : "var(--faint)")};
+`;
+
 export default function Leaderboard() {
+  const dispatch = useAppDispatch();
   const summary = useAppSelector((s) => s.agents.summary);
   const rankings = summary?.rankings ?? [];
+
+  // Rank movement vs ~6 simulated hours ago (from each agent's portfolio history).
+  const deltas = useMemo(() => {
+    const out: Record<string, number> = {};
+    if (rankings.length < 2) return out;
+    const past = rankings
+      .map((a) => {
+        const h = a.portfolioHistory;
+        const idx = Math.max(0, h.length - 7);
+        return { id: a.id, v: h[idx]?.value ?? 0 };
+      })
+      .sort((x, y) => y.v - x.v);
+    rankings.forEach((a, nowRank) => {
+      const pastRank = past.findIndex((p) => p.id === a.id);
+      out[a.id] = pastRank - nowRank; // positive = moved up
+    });
+    return out;
+  }, [rankings]);
 
   return (
     <Section id="arena">
@@ -104,8 +136,18 @@ export default function Leaderboard() {
           {rankings.map((a, i) => {
             const p = a.portfolio;
             return (
-              <Row key={a.id} accent={a.color} lead={i === 0}>
-                <Rank i={i}>{i === 0 ? "①" : i + 1}</Rank>
+              <Row
+                key={a.id}
+                accent={a.color}
+                lead={i === 0}
+                onClick={() => dispatch(selectAgent(a.id))}
+                role="button"
+                aria-label={`Open ${a.name} details`}
+              >
+                <Rank i={i}>
+                  {i === 0 ? "①" : i + 1}
+                  {(deltas[a.id] ?? 0) !== 0 && <Delta d={deltas[a.id]}>{deltas[a.id] > 0 ? "▲" : "▼"}</Delta>}
+                </Rank>
                 <AgentCell>
                   <Avatar bg={a.colorLight} fg={a.color}>
                     {a.avatar}
@@ -143,6 +185,8 @@ export default function Leaderboard() {
             <div style={{ padding: 40, textAlign: "center", color: "var(--faint)" }}>Booting the arena…</div>
           )}
         </Wrap>
+
+        <ArenaEvents />
       </Container>
     </Section>
   );

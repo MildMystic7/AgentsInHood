@@ -11,6 +11,7 @@ import MeetTheAgents from "@/components/MeetTheAgents";
 import TradeActivity from "@/components/TradeActivity";
 import AIReasoning from "@/components/AIReasoning";
 import HowItWorks from "@/components/HowItWorks";
+import AgentModal from "@/components/AgentModal";
 
 export default function Page() {
   const dispatch = useAppDispatch();
@@ -36,6 +37,7 @@ export default function Page() {
       <TradeActivity />
       <AIReasoning />
       <HowItWorks />
+      <AgentModal />
     </main>
   );
 }

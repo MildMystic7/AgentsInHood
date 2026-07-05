@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import styled from "@emotion/styled";
 import { useAppSelector } from "@/store/hooks";
-import { Container, LiveDot, Mono } from "./ui";
+import { Container, LiveDot } from "./ui";
 import { money } from "@/lib/format";
 
 const Bar = styled.header`
@@ -143,6 +144,22 @@ const NAV = [
   ["#how", "How It Works"],
 ];
 
+/** Live countdown to the end of the current season (re-renders every second). */
+function useCountdown(endISO?: string): string {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  if (!endISO) return "—";
+  const ms = Math.max(0, new Date(endISO).getTime() - now);
+  const h = Math.floor(ms / 3_600_000);
+  const m = Math.floor((ms % 3_600_000) / 60_000);
+  const s = Math.floor((ms % 60_000) / 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+
 export default function Header() {
   const summary = useAppSelector((s) => s.agents.summary);
   const live = summary?.live ?? false;
@@ -151,6 +168,7 @@ export default function Header() {
   const agents = summary ? Object.keys(summary.agentData).length : 4;
   const leader = summary?.rankings[0];
   const season = summary?.season;
+  const endsIn = useCountdown(summary?.competition.end);
 
   return (
     <>
@@ -161,7 +179,7 @@ export default function Header() {
               <Logo>α</Logo>
               Alpha Arena
             </Brand>
-            <Nav>
+            <Nav aria-label="Sections">
               {NAV.map(([href, label]) => (
                 <a key={href} href={href}>
                   {label}
@@ -195,8 +213,8 @@ export default function Header() {
               <div className="v">{money(cap, 0)}</div>
             </Stat>
             <Stat>
-              <div className="l">Duration</div>
-              <div className="v">{hours}h</div>
+              <div className="l">Season Ends In</div>
+              <div className="v" style={{ color: "var(--accent)" }}>{endsIn}</div>
             </Stat>
             <Stat>
               <div className="l">Competitors</div>

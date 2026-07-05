@@ -12,6 +12,7 @@ import {
 import { PriceFeed, mulberry32 } from "./prices";
 import { decide, mockDecide, type DecisionContext } from "./llm";
 import { getAnchorPrices, getLivePrices } from "./market";
+import { kvConfigured, kvGet, kvSet } from "./kv";
 import type {
   Agent,
   AgentConfig,
@@ -353,20 +354,31 @@ async function getState(): Promise<Snap> {
 }
 
 // Optional: replace the latest cycle's reasoning with a real LLM call. Off unless
-// ARENA_LIVE_LLM=true (intended for local demos). Cached per (season,hour,agent),
-// best-effort — any failure silently keeps the deterministic mock reasoning.
+// ARENA_LIVE_LLM=true. Consistency across serverless instances comes from KV
+// (Vercel KV / Upstash): the first lambda to see a new hour generates + stores,
+// everyone else reads the same text. Falls back to in-memory cache locally, and
+// any failure silently keeps the deterministic mock reasoning.
 const llmCache = new Map<string, string>();
 async function enrichWithRealLLM(snap: Snap): Promise<void> {
   if (String(process.env.ARENA_LIVE_LLM ?? "false") !== "true" || snap.hour < 1) return;
+  const useKv = kvConfigured();
   await Promise.all(
     snap.agents.map(async (a) => {
-      const k = `${snap.season}:${snap.hour}:${a.cfg.id}`;
+      const k = `arena:r:${snap.season}:${snap.hour}:${a.cfg.id}`;
       let text = llmCache.get(k);
+      if (text === undefined && useKv) {
+        const stored = await kvGet(k);
+        if (stored) {
+          text = stored;
+          llmCache.set(k, stored);
+        }
+      }
       if (text === undefined) {
         try {
           const ctx = contextFor(a, snap.prices, momentumOf(windowFrom(snap.prices)), snap.hour);
           text = (await decide(a.cfg, ctx)).reasoning;
           llmCache.set(k, text);
+          if (useKv) await kvSet(k, text);
         } catch {
           return;
         }

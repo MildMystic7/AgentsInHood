@@ -1,7 +1,8 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { useAppSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectAgent } from "@/store/uiSlice";
 import { Container, Section, SectionHead, Kicker, Title, Sub, Avatar, Pill } from "./ui";
 import { money, pct, signColor, shortAddr, price, tokens } from "@/lib/format";
 
@@ -21,6 +22,12 @@ const Card = styled.div<{ accent: string }>`
   padding: 20px;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+  &:hover {
+    border-color: ${(p) => p.accent}66;
+    transform: translateY(-2px);
+  }
   &::before {
     content: "";
     position: absolute;
@@ -83,6 +90,7 @@ const Wallet = styled.a`
 `;
 
 export default function MeetTheAgents() {
+  const dispatch = useAppDispatch();
   const summary = useAppSelector((s) => s.agents.summary);
   const agents = summary ? Object.values(summary.agentData) : [];
 
@@ -101,7 +109,13 @@ export default function MeetTheAgents() {
           {agents.map((a) => {
             const p = a.portfolio;
             return (
-              <Card key={a.id} accent={a.color}>
+              <Card
+                key={a.id}
+                accent={a.color}
+                onClick={() => dispatch(selectAgent(a.id))}
+                role="button"
+                aria-label={`Open ${a.name} details`}
+              >
                 <Top>
                   <Avatar bg={a.colorLight} fg={a.color}>
                     {a.avatar}
