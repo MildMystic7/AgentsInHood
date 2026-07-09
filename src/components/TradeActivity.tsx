@@ -10,9 +10,11 @@ import type { Trade } from "@/engine/types";
 
 const CHAINS: Record<number, string> = {
   1: "Ethereum",
-  42161: "Arbitrum",
-  8453: "Base",
+  43114: "Avalanche",
   1151111081099710: "Solana",
+  2001: "Bitcoin",
+  2002: "XRP Ledger",
+  2003: "Dogecoin",
 };
 
 const Feed = styled(Panel)`
@@ -39,9 +41,9 @@ const Type = styled.span<{ t: Trade["type"] }>`
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 6px;
-  color: ${(p) => (p.t === "BUY" ? "var(--green)" : p.t === "SELL" ? "var(--red)" : "var(--accent)")};
+  color: ${(p) => (p.t === "BUY" ? "var(--green)" : p.t === "SELL" ? "var(--red)" : "var(--gold)")};
   background: ${(p) =>
-    p.t === "BUY" ? "rgba(34,197,94,0.12)" : p.t === "SELL" ? "rgba(244,63,94,0.12)" : "rgba(139,92,246,0.14)"};
+    p.t === "BUY" ? "rgba(0,200,5,0.12)" : p.t === "SELL" ? "rgba(255,80,0,0.12)" : "rgba(245,179,1,0.12)"};
 `;
 
 const Route = styled.div`
@@ -101,7 +103,7 @@ export default function TradeActivity() {
           <div>
             <Kicker>Trade Activity</Kicker>
             <Title>The Order Flow</Title>
-            <Sub>Every buy, sell, and cross-chain swap as it happens — routed across Ethereum, Arbitrum, Base, and Solana.</Sub>
+            <Sub>Every buy, sell, and swap as it happens — across the full Robinhood-listed universe, from BTC to BONK.</Sub>
           </div>
         </SectionHead>
 

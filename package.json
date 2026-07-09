@@ -1,8 +1,8 @@
 {
-  "name": "alpha-arena",
+  "name": "alphahood",
   "version": "0.1.0",
   "private": true,
-  "description": "Alpha Arena — a live arena where frontier AI models compete at crypto paper-trading. Real LLM reasoning, simulated execution.",
+  "description": "AlphaHood — a live arena where frontier AI models compete at paper-trading Robinhood-listed coins. Real LLM reasoning, simulated execution. $ALPHA on Robinhood Chain.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -5,7 +5,7 @@ import { useAppSelector } from "@/store/hooks";
 import { Container, LiveDot } from "./ui";
 import { price } from "@/lib/format";
 
-const ORDER = ["ETH", "WBTC", "SOL", "LINK", "AAVE", "ARB", "AERO", "UNI", "PEPE", "SHIB", "PENGU"];
+const ORDER = ["BTC", "ETH", "SOL", "XRP", "DOGE", "AVAX", "LINK", "UNI", "AAVE", "SHIB", "PEPE", "BONK", "WIF", "PENGU"];
 
 const Bar = styled.div`
   border-top: 1px solid var(--border-soft);

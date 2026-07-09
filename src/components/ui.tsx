@@ -63,7 +63,7 @@ export const Mono = styled.span`
   font-variant-numeric: tabular-nums;
 `;
 
-export const Pill = styled.span<{ tone?: "green" | "red" | "dim" | "accent" }>`
+export const Pill = styled.span<{ tone?: "green" | "red" | "dim" | "accent" | "gold" }>`
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -74,12 +74,14 @@ export const Pill = styled.span<{ tone?: "green" | "red" | "dim" | "accent" }>`
   border-radius: 999px;
   background: ${(p) =>
     p.tone === "green"
-      ? "rgba(34,197,94,0.12)"
+      ? "rgba(0,200,5,0.12)"
       : p.tone === "red"
-        ? "rgba(244,63,94,0.12)"
+        ? "rgba(255,80,0,0.12)"
         : p.tone === "accent"
-          ? "rgba(139,92,246,0.14)"
-          : "var(--panel-3)"};
+          ? "rgba(0,200,5,0.12)"
+          : p.tone === "gold"
+            ? "rgba(245,179,1,0.12)"
+            : "var(--panel-3)"};
   color: ${(p) =>
     p.tone === "green"
       ? "var(--green)"
@@ -87,7 +89,9 @@ export const Pill = styled.span<{ tone?: "green" | "red" | "dim" | "accent" }>`
         ? "var(--red)"
         : p.tone === "accent"
           ? "var(--accent)"
-          : "var(--dim)"};
+          : p.tone === "gold"
+            ? "var(--gold)"
+            : "var(--dim)"};
 `;
 
 export const Avatar = styled.div<{ bg: string; fg: string }>`
@@ -111,17 +115,17 @@ export const LiveDot = styled.span<{ active?: boolean }>`
   height: 8px;
   border-radius: 50%;
   background: ${(p) => (p.active ? "var(--green)" : "var(--faint)")};
-  box-shadow: ${(p) => (p.active ? "0 0 0 0 rgba(34,197,94,0.6)" : "none")};
+  box-shadow: ${(p) => (p.active ? "0 0 0 0 rgba(0,200,5,0.6)" : "none")};
   animation: ${(p) => (p.active ? "pulse 1.6s infinite" : "none")};
   @keyframes pulse {
     0% {
-      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+      box-shadow: 0 0 0 0 rgba(0, 200, 5, 0.5);
     }
     70% {
-      box-shadow: 0 0 0 7px rgba(34, 197, 94, 0);
+      box-shadow: 0 0 0 7px rgba(0, 200, 5, 0);
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+      box-shadow: 0 0 0 0 rgba(0, 200, 5, 0);
     }
   }
 `;

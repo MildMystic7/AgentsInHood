@@ -1,11 +1,14 @@
 import type { AgentConfig, TokenConfig, Competition } from "./types";
 
-// Chain ids (EVM + Solana's LI.FI/Jumper non-EVM id) — same universe as the original.
+// Native chains of the Robinhood-listed universe (EVM ids where they exist,
+// synthetic ids for non-EVM networks).
 export const CHAINS: Record<number, string> = {
   1: "Ethereum",
-  42161: "Arbitrum",
-  8453: "Base",
+  43114: "Avalanche",
   1151111081099710: "Solana",
+  2001: "Bitcoin",
+  2002: "XRP Ledger",
+  2003: "Dogecoin",
 };
 
 export const STARTING_CAPITAL = 1000;
@@ -93,22 +96,26 @@ export const AGENTS: AgentConfig[] = [
 ];
 
 /**
- * Tradable universe. USDC is the cash/settlement asset. Prices are seeded near
- * realistic levels; the simulator random-walks them from here.
+ * Tradable universe: coins listed on Robinhood (matching our $ALPHA launch on
+ * Robinhood Chain). USDC is the cash/settlement asset. Base prices are only the
+ * offline fallback — live levels come from CoinGecko anchors.
  */
 export const TOKENS: TokenConfig[] = [
   { symbol: "USDC", name: "USD Coin", chain: "Ethereum", chainId: 1, basePrice: 1, vol: 0.0002, drift: 0 },
-  { symbol: "ETH", name: "Ethereum", chain: "Arbitrum", chainId: 42161, basePrice: 1593.2, vol: 0.018, drift: 0.0003 },
-  { symbol: "WBTC", name: "Wrapped Bitcoin", chain: "Ethereum", chainId: 1, basePrice: 61840, vol: 0.015, drift: 0.0004 },
-  { symbol: "SOL", name: "Solana", chain: "Solana", chainId: 1151111081099710, basePrice: 75.79, vol: 0.03, drift: 0.0006 },
-  { symbol: "LINK", name: "Chainlink", chain: "Arbitrum", chainId: 42161, basePrice: 7.29, vol: 0.028, drift: 0.0002 },
-  { symbol: "AAVE", name: "Aave", chain: "Ethereum", chainId: 1, basePrice: 92.4, vol: 0.032, drift: 0.0003 },
-  { symbol: "ARB", name: "Arbitrum", chain: "Arbitrum", chainId: 42161, basePrice: 0.63, vol: 0.035, drift: 0.0 },
-  { symbol: "AERO", name: "Aerodrome", chain: "Base", chainId: 8453, basePrice: 0.78, vol: 0.045, drift: 0.0005 },
-  { symbol: "UNI", name: "Uniswap", chain: "Ethereum", chainId: 1, basePrice: 6.15, vol: 0.03, drift: 0.0001 },
-  { symbol: "PEPE", name: "Pepe", chain: "Ethereum", chainId: 1, basePrice: 0.0000071, vol: 0.07, drift: 0.001 },
-  { symbol: "SHIB", name: "Shiba Inu", chain: "Ethereum", chainId: 1, basePrice: 0.0000094, vol: 0.06, drift: 0.0005 },
-  { symbol: "PENGU", name: "Pudgy Penguins", chain: "Solana", chainId: 1151111081099710, basePrice: 0.021, vol: 0.08, drift: 0.0012 },
+  { symbol: "BTC", name: "Bitcoin", chain: "Bitcoin", chainId: 2001, basePrice: 60000, vol: 0.013, drift: 0.0004 },
+  { symbol: "ETH", name: "Ethereum", chain: "Ethereum", chainId: 1, basePrice: 1600, vol: 0.018, drift: 0.0003 },
+  { symbol: "SOL", name: "Solana", chain: "Solana", chainId: 1151111081099710, basePrice: 77, vol: 0.03, drift: 0.0006 },
+  { symbol: "XRP", name: "XRP", chain: "XRP Ledger", chainId: 2002, basePrice: 2.2, vol: 0.028, drift: 0.0002 },
+  { symbol: "DOGE", name: "Dogecoin", chain: "Dogecoin", chainId: 2003, basePrice: 0.16, vol: 0.045, drift: 0.0006 },
+  { symbol: "AVAX", name: "Avalanche", chain: "Avalanche", chainId: 43114, basePrice: 18, vol: 0.032, drift: 0.0003 },
+  { symbol: "LINK", name: "Chainlink", chain: "Ethereum", chainId: 1, basePrice: 7.4, vol: 0.028, drift: 0.0002 },
+  { symbol: "UNI", name: "Uniswap", chain: "Ethereum", chainId: 1, basePrice: 6.2, vol: 0.03, drift: 0.0001 },
+  { symbol: "AAVE", name: "Aave", chain: "Ethereum", chainId: 1, basePrice: 85, vol: 0.032, drift: 0.0003 },
+  { symbol: "SHIB", name: "Shiba Inu", chain: "Ethereum", chainId: 1, basePrice: 0.0000043, vol: 0.06, drift: 0.0005 },
+  { symbol: "PEPE", name: "Pepe", chain: "Ethereum", chainId: 1, basePrice: 0.0000023, vol: 0.07, drift: 0.001 },
+  { symbol: "BONK", name: "Bonk", chain: "Solana", chainId: 1151111081099710, basePrice: 0.000012, vol: 0.075, drift: 0.001 },
+  { symbol: "WIF", name: "dogwifhat", chain: "Solana", chainId: 1151111081099710, basePrice: 0.65, vol: 0.07, drift: 0.0008 },
+  { symbol: "PENGU", name: "Pudgy Penguins", chain: "Solana", chainId: 1151111081099710, basePrice: 0.0062, vol: 0.08, drift: 0.0012 },
 ];
 
 export const TRADABLE = TOKENS.filter((t) => t.symbol !== "USDC");

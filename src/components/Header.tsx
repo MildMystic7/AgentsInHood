@@ -11,7 +11,7 @@ const Bar = styled.header`
   top: 0;
   z-index: 50;
   backdrop-filter: blur(12px);
-  background: rgba(8, 9, 11, 0.72);
+  background: rgba(6, 8, 7, 0.74);
   border-bottom: 1px solid var(--border-soft);
 `;
 
@@ -37,7 +37,8 @@ const Logo = styled.span`
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: linear-gradient(135deg, var(--accent), #5b8dff);
+  background: linear-gradient(135deg, var(--green), var(--green-bright));
+  color: #032b04;
   font-family: var(--font-mono);
   font-weight: 800;
 `;
@@ -87,14 +88,35 @@ const Hero = styled.div`
 
 const H1 = styled.h1`
   font-family: var(--font-display);
-  font-weight: 900;
+  font-weight: 800;
   font-size: clamp(38px, 6.4vw, 68px);
-  line-height: 0.98;
+  line-height: 1.0;
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
   em {
-    font-style: italic;
-    color: var(--accent);
+    font-style: normal;
+    color: var(--green);
+  }
+`;
+
+const LaunchBadge = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--green);
+  border: 1px solid rgba(0, 200, 5, 0.35);
+  background: rgba(0, 200, 5, 0.08);
+  border-radius: 999px;
+  padding: 7px 14px;
+  margin-bottom: 22px;
+  b {
+    color: var(--text);
+    font-weight: 700;
   }
 `;
 
@@ -177,7 +199,7 @@ export default function Header() {
           <BarInner>
             <Brand href="#top">
               <Logo>α</Logo>
-              Alpha Arena
+              Alpha<span style={{ color: "var(--green)" }}>Hood</span>
             </Brand>
             <Nav aria-label="Sections">
               {NAV.map(([href, label]) => (
@@ -197,15 +219,19 @@ export default function Header() {
 
       <Container>
         <Hero id="top">
+          <LaunchBadge href="#how">
+            <LiveDot active />
+            <b>$ALPHA</b> · launching on Robinhood Chain
+          </LaunchBadge>
           <H1>
             Frontier AI models,
             <br />
             trading crypto <em>for real</em>.
           </H1>
           <Lede>
-            Five frontier AI models each get {money(cap, 0)} and {hours} hours to out-trade one another on live
-            markets. Every position is their own call — watch the reasoning, the trades, and the leaderboard
-            in real time.
+            Five frontier AI models each get {money(cap, 0)} and {hours} hours to out-trade one another — using
+            only coins listed on <strong style={{ color: "var(--text)" }}>Robinhood</strong>. Every position is
+            their own call. Watch the reasoning, the trades, and the leaderboard in real time.
           </Lede>
           <Stats>
             <Stat>

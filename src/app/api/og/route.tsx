@@ -20,8 +20,8 @@ export async function GET() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          background: "#08090b",
-          backgroundImage: "radial-gradient(circle at 50% -20%, rgba(139,92,246,0.25), transparent 55%)",
+          background: "#060807",
+          backgroundImage: "radial-gradient(circle at 50% -20%, rgba(0,200,5,0.22), transparent 55%)",
           padding: "56px 64px",
           fontFamily: "sans-serif",
           color: "#eef1f6",
@@ -36,34 +36,37 @@ export async function GET() {
               width: 54,
               height: 54,
               borderRadius: 14,
-              background: "linear-gradient(135deg, #8b5cf6, #5b8dff)",
+              background: "linear-gradient(135deg, #00c805, #00e65c)",
+              color: "#032b04",
               fontSize: 32,
               fontWeight: 800,
             }}
           >
             α
           </div>
-          <div style={{ display: "flex", fontSize: 42, fontWeight: 800, letterSpacing: -1 }}>Alpha Arena</div>
+          <div style={{ display: "flex", fontSize: 42, fontWeight: 800, letterSpacing: -1 }}>
+            Alpha<span style={{ color: "#00c805" }}>Hood</span>
+          </div>
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: 8,
               marginLeft: "auto",
-              border: "1px solid #23272f",
+              border: "1px solid #212823",
               borderRadius: 999,
               padding: "8px 18px",
               fontSize: 22,
-              color: "#969ca8",
+              color: "#98a29b",
             }}
           >
-            <div style={{ display: "flex", width: 12, height: 12, borderRadius: 999, background: "#22c55e" }} />
+            <div style={{ display: "flex", width: 12, height: 12, borderRadius: 999, background: "#00c805" }} />
             LIVE · S{s.season}
           </div>
         </div>
 
-        <div style={{ display: "flex", fontSize: 27, color: "#969ca8", marginTop: 14 }}>
-          Five frontier AI models. $1,000 each. One market. Who is the best trader?
+        <div style={{ display: "flex", fontSize: 27, color: "#98a29b", marginTop: 14 }}>
+          Five frontier AIs trade Robinhood-listed coins. $1,000 each. Who is the best trader?
         </div>
 
         <div
@@ -71,9 +74,9 @@ export async function GET() {
             display: "flex",
             flexDirection: "column",
             marginTop: 34,
-            border: "1px solid #23272f",
+            border: "1px solid #212823",
             borderRadius: 18,
-            background: "#101216",
+            background: "#0c0f0d",
             overflow: "hidden",
           }}
         >
@@ -85,7 +88,7 @@ export async function GET() {
                 alignItems: "center",
                 gap: 20,
                 padding: "17px 28px",
-                borderBottom: i < top.length - 1 ? "1px solid #1a1d24" : "none",
+                borderBottom: i < top.length - 1 ? "1px solid #181d19" : "none",
                 borderLeft: `6px solid ${a.color}`,
               }}
             >
@@ -104,7 +107,7 @@ export async function GET() {
                   fontWeight: 700,
                   width: 150,
                   justifyContent: "flex-end",
-                  color: a.portfolio.pnlPct >= 0 ? "#22c55e" : "#f43f5e",
+                  color: a.portfolio.pnlPct >= 0 ? "#00e65c" : "#ff5000",
                 }}
               >
                 {a.portfolio.pnlPct >= 0 ? "+" : ""}
@@ -114,8 +117,8 @@ export async function GET() {
           ))}
         </div>
 
-        <div style={{ display: "flex", marginTop: "auto", fontSize: 22, color: "#626873" }}>
-          Real market prices · AI reasoning every hour · alpha-arena-gray.vercel.app
+        <div style={{ display: "flex", marginTop: "auto", fontSize: 22, color: "#5f6a62" }}>
+          Robinhood-listed coins · $ALPHA on Robinhood Chain · alpha-arena-gray.vercel.app
         </div>
       </div>
     ),

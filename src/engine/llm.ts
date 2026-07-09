@@ -176,7 +176,7 @@ export function mockDecide(agent: AgentConfig, ctx: DecisionContext, rand: () =>
   const ranked = [...ctx.tradable].sort((a, b) => (ctx.momentum[b.symbol] ?? 0) - (ctx.momentum[a.symbol] ?? 0));
   const hottest = ranked[0];
   const coldest = ranked[ranked.length - 1];
-  const memecoins = ctx.tradable.filter((t) => ["PEPE", "SHIB", "PENGU", "AERO"].includes(t.symbol));
+  const memecoins = ctx.tradable.filter((t) => ["DOGE", "SHIB", "PEPE", "BONK", "WIF", "PENGU"].includes(t.symbol));
   const heldSymbols = new Set(ctx.holdings.map((h) => h.symbol));
   const cash = ctx.cashUSDC;
 

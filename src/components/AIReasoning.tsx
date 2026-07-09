@@ -149,7 +149,7 @@ export default function AIReasoning() {
                 <span className="name" style={{ color: l.color }}>
                   {l.name}
                 </span>
-                <Pill tone={l.trade.startsWith("BUY") ? "green" : l.trade.startsWith("SELL") ? "red" : l.trade.startsWith("SWAP") ? "accent" : "dim"}>
+                <Pill tone={l.trade.startsWith("BUY") ? "green" : l.trade.startsWith("SELL") ? "red" : l.trade.startsWith("SWAP") ? "gold" : "dim"}>
                   {l.trade}
                 </Pill>
                 <span className="hour">Hour {l.hour}</span>

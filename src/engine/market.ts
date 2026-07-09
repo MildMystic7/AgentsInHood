@@ -1,17 +1,20 @@
 import { TOKENS } from "./config";
 
-// Symbol → CoinGecko id.
+// Symbol → CoinGecko id (Robinhood-listed universe).
 const CG_IDS: Record<string, string> = {
+  BTC: "bitcoin",
   ETH: "ethereum",
-  WBTC: "wrapped-bitcoin",
   SOL: "solana",
+  XRP: "ripple",
+  DOGE: "dogecoin",
+  AVAX: "avalanche-2",
   LINK: "chainlink",
-  AAVE: "aave",
-  ARB: "arbitrum",
-  AERO: "aerodrome-finance",
   UNI: "uniswap",
-  PEPE: "pepe",
+  AAVE: "aave",
   SHIB: "shiba-inu",
+  PEPE: "pepe",
+  BONK: "bonk",
+  WIF: "dogwifcoin",
   PENGU: "pudgy-penguins",
   USDC: "usd-coin",
 };

@@ -1,27 +1,30 @@
 :root {
-  /* palette — dark "trading terminal" */
-  --bg: #08090b;
-  --bg-grid: #0d0f13;
-  --panel: #101216;
-  --panel-2: #15181e;
-  --panel-3: #1b1f27;
-  --border: #23272f;
-  --border-soft: #1a1d24;
+  /* palette — "Robinhood after dark": near-black with a green bias, one brand green */
+  --bg: #060807;
+  --bg-grid: #0b0f0c;
+  --panel: #0c0f0d;
+  --panel-2: #111512;
+  --panel-3: #171c18;
+  --border: #212823;
+  --border-soft: #181d19;
 
-  --text: #eef1f6;
-  --dim: #969ca8;
-  --faint: #626873;
+  --text: #f0f4f1;
+  --dim: #98a29b;
+  --faint: #5f6a62;
 
-  --green: #22c55e;
-  --green-dim: #16a34a;
-  --red: #f43f5e;
-  --red-dim: #e11d48;
-  --accent: #8b5cf6;
+  /* Robinhood signature green is BOTH the brand accent and the profit color */
+  --green: #00c805;
+  --green-bright: #00e65c;
+  --green-dim: #00a304;
+  --red: #ff5000;
+  --red-dim: #d94400;
+  --accent: #00c805;
   --gold: #f5b301;
 
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --font-display: "Playfair Display", Georgia, serif;
+  /* Robinhood world = clean grotesque headlines; the serif lives only in the α watermark */
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
 
   --radius: 14px;
   --radius-sm: 10px;
@@ -36,19 +39,44 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-body {
-  background-image: radial-gradient(circle at 50% -10%, rgba(139, 92, 246, 0.1), transparent 45%),
+/* Background lives on <html> so the α watermark (body::after, z-index:-1)
+   can paint above it while staying underneath all content. */
+html {
+  background-color: var(--bg);
+  background-image: radial-gradient(circle at 50% -10%, rgba(0, 200, 5, 0.09), transparent 46%),
     linear-gradient(var(--bg-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
   background-size: 100% 100%, 46px 46px, 46px 46px;
-  background-position: 0 0, 0 0, 0 0;
+  background-attachment: fixed;
+}
+
+body {
+  background: transparent;
+}
+
+/* The big α — the project's mark, watermarked across the whole page */
+body::after {
+  content: "α";
+  position: fixed;
+  z-index: -1;
+  right: -6vw;
+  top: 50%;
+  transform: translateY(-52%);
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: min(96vh, 72vw);
+  line-height: 1;
+  color: var(--green);
+  opacity: 0.05;
+  pointer-events: none;
+  user-select: none;
 }
 
 a {
@@ -57,7 +85,7 @@ a {
 }
 
 ::selection {
-  background: rgba(139, 92, 246, 0.35);
+  background: rgba(0, 200, 5, 0.32);
 }
 
 /* tabular numerics everywhere numbers matter */
