@@ -159,11 +159,11 @@ const Stat = styled.div`
 
 const NAV = [
   ["#arena", "The Arena"],
-  ["#trajectories", "Trajectories"],
   ["#agents", "Meet the Agents"],
   ["#activity", "Trade Activity"],
   ["#reasoning", "AI Reasoning"],
   ["#how", "How It Works"],
+  ["/docs", "Docs"],
 ];
 
 /** Live countdown to the end of the current season (re-renders every second). */
