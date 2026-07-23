@@ -9,12 +9,9 @@ import { money } from "@/lib/format";
 import type { Trade } from "@/engine/types";
 
 const CHAINS: Record<number, string> = {
-  1: "Ethereum",
-  43114: "Avalanche",
-  1151111081099710: "Solana",
-  2001: "Bitcoin",
-  2002: "XRP Ledger",
-  2003: "Dogecoin",
+  0: "Cash",
+  10: "NASDAQ",
+  20: "NYSE",
 };
 
 const Feed = styled(Panel)`
@@ -103,13 +100,15 @@ export default function TradeActivity() {
           <div>
             <Kicker>Trade Activity</Kicker>
             <Title>The Order Flow</Title>
-            <Sub>Every buy, sell, and swap as it happens — across the full Robinhood-listed universe, from BTC to BONK.</Sub>
+            <Sub>Every buy, sell, and rotation as it happens — across the full Robinhood stock universe, from AAPL to GME.</Sub>
           </div>
         </SectionHead>
 
         <Feed>
           {trades.map((t, i) => {
-            const sameChain = t.fromChainId === t.toChainId;
+            // The stock side of the trade (BUY buys toSymbol, SELL sells fromSymbol).
+            const stockSymbol = t.type === "SELL" ? t.fromSymbol : t.toSymbol;
+            const exchange = CHAINS[t.type === "SELL" ? t.fromChainId : t.toChainId] ?? "";
             return (
               <Item
                 key={`${t.agentId}-${t.timestamp}-${i}`}
@@ -123,11 +122,15 @@ export default function TradeActivity() {
                 <Route>
                   <Type t={t.type}>{t.type}</Type>
                   <span>
-                    {t.fromSymbol} → <strong style={{ color: t.color }}>{t.toSymbol}</strong>
+                    <strong style={{ color: t.color }}>{stockSymbol}</strong>
+                    {t.type === "SWAP" && (
+                      <>
+                        {" "}
+                        → <strong style={{ color: t.color }}>{t.toSymbol}</strong>
+                      </>
+                    )}
                   </span>
-                  <span className="chain">
-                    {sameChain ? CHAINS[t.toChainId] : `${CHAINS[t.fromChainId]} → ${CHAINS[t.toChainId]}`}
-                  </span>
+                  <span className="chain">{exchange}</span>
                 </Route>
                 <Amt>
                   <div className="v">{money(t.value)}</div>

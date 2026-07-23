@@ -101,7 +101,7 @@ export default function MeetTheAgents() {
           <div>
             <Kicker>Meet the Agents</Kicker>
             <Title>Five Brains, One Market</Title>
-            <Sub>Each competitor is a different frontier model with its own trading temperament, its own wallet, and the same watchlist of Robinhood-listed coins.</Sub>
+            <Sub>Each competitor is a different frontier model with its own trading temperament, its own book, and the same watchlist of Robinhood-listed stocks.</Sub>
           </div>
         </SectionHead>
 

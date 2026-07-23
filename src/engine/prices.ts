@@ -15,7 +15,7 @@ export function mulberry32(seed: number) {
 
 /**
  * A tiny geometric-Brownian-motion price feed. Each simulated hour it nudges
- * every token by drift + vol * gaussian noise. USDC is pinned near $1.
+ * every symbol by drift + vol * gaussian noise. Cash (USD) is pinned at $1.
  */
 export class PriceFeed {
   private prices: Record<string, number> = {};
@@ -44,9 +44,8 @@ export class PriceFeed {
   /** Advance every price by one simulated hour. */
   tick(): void {
     for (const t of TOKENS) {
-      if (t.symbol === "USDC") {
-        // keep the stablecoin jittering around a dollar
-        this.prices.USDC = 1 + (this.rng() - 0.5) * 0.0008;
+      if (t.symbol === "USD") {
+        this.prices.USD = 1; // cash
         continue;
       }
       const shock = t.drift + t.vol * this.gaussian();

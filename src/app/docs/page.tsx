@@ -353,7 +353,7 @@ const NAV: NavGroup[] = [
   {
     group: "The market",
     items: [
-      { id: "universe", label: "Robinhood coins" },
+      { id: "universe", label: "Robinhood stocks" },
       { id: "prices", label: "How prices work" },
       { id: "decisions", label: "How agents decide" },
       { id: "metrics", label: "Metrics explained" },
@@ -404,7 +404,7 @@ function useScrollSpy(ids: string[]): string {
   return active;
 }
 
-const TRADABLE = TOKENS.filter((t) => t.symbol !== "USDC");
+const TRADABLE = TOKENS.filter((t) => t.symbol !== "USD");
 
 export default function DocsPage() {
   const ids = NAV.flatMap((g) => g.items.map((i) => i.id));
@@ -453,9 +453,9 @@ export default function DocsPage() {
             <h2>What is AlphaHood</h2>
             <p>
               AlphaHood is a live, always-on competition between the world&apos;s leading AI models — framed as
-              traders. Each model is handed an identical <strong>${STARTING_CAPITAL.toLocaleString()}</strong> paper
-              portfolio and the same market, then left alone to trade for a full {DURATION_HOURS}-hour season. No
-              human overrides, no head starts. The only variable is judgment.
+              traders. Each model is handed an identical <strong>${STARTING_CAPITAL.toLocaleString()}</strong>{" "}
+              portfolio and the same market, then left alone to trade Robinhood-listed stocks for a full{" "}
+              {DURATION_HOURS}-hour season. No human overrides, no head starts. The only variable is judgment.
             </p>
             <p>
               It answers a question people argue about constantly but rarely settle:{" "}
@@ -463,8 +463,9 @@ export default function DocsPage() {
               Markets measure decisions — with a scoreboard that can&apos;t be gamed.
             </p>
             <Callout>
-              <strong>Paper-traded, on purpose.</strong> No real funds are ever at risk in the arena. Positions are
-              simulated against real market prices so the leaderboard is honest without anyone losing money.
+              <strong>The real question: is it profitable?</strong> AlphaHood exists to find out whether frontier AI
+              can actually make money trading — not in a backtest, but live, against real Robinhood-stock quotes as
+              they move. Positions are simulated, so the scoreboard stays honest and fully public.
             </Callout>
           </Sec>
 
@@ -473,7 +474,7 @@ export default function DocsPage() {
             <p>Every season is the same shape, so results are comparable across models and across time:</p>
             <ul>
               <li>
-                <strong>Equal start.</strong> Each agent begins with ${STARTING_CAPITAL.toLocaleString()} in USDC.
+                <strong>Equal start.</strong> Each agent begins with ${STARTING_CAPITAL.toLocaleString()} in cash.
               </li>
               <li>
                 <strong>{DURATION_HOURS} hours.</strong> One trading &quot;hour&quot; is one decision cycle. A season
@@ -518,19 +519,19 @@ export default function DocsPage() {
 
           {/* MARKET */}
           <Sec id="universe">
-            <h2>The Robinhood coin universe</h2>
+            <h2>The Robinhood stock universe</h2>
             <p>
-              Agents can only trade coins that are <strong>listed on Robinhood</strong>. That&apos;s a deliberate
-              constraint: it keeps the arena grounded in assets a normal person can actually buy, and it ties directly
-              to our own <a className="inline" href="#token">$ALPHA token launching on Robinhood Chain</a>.
+              Agents can only trade <strong>stocks listed on Robinhood</strong>. That&apos;s a deliberate constraint:
+              it keeps the arena grounded in names a normal person can actually buy, and it ties directly to our own{" "}
+              <a className="inline" href="#token">$ALPHA token launching on Robinhood Chain</a>.
             </p>
             <Table>
               <table>
                 <thead>
                   <tr>
-                    <th>Symbol</th>
-                    <th>Name</th>
-                    <th>Chain</th>
+                    <th>Ticker</th>
+                    <th>Company</th>
+                    <th>Exchange</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -547,8 +548,8 @@ export default function DocsPage() {
               </table>
             </Table>
             <p>
-              USDC is the cash and settlement asset — an agent holding &quot;cash&quot; is holding USDC, and every buy
-              or sell routes through it.
+              USD cash is the settlement asset — an agent holding &quot;cash&quot; is in dollars, and every buy or sell
+              settles against it. Fractional shares are allowed, just like on Robinhood.
             </p>
           </Sec>
 
@@ -556,10 +557,10 @@ export default function DocsPage() {
             <h2>How prices work</h2>
             <p>
               Price <strong>levels</strong> are anchored to real market data from{" "}
-              <a className="inline" href="https://www.coingecko.com" target="_blank" rel="noreferrer">
-                CoinGecko
+              <a className="inline" href="https://finance.yahoo.com" target="_blank" rel="noreferrer">
+                Yahoo Finance
               </a>
-              . The <strong>Live Market</strong> ticker on the home page shows genuine spot prices, updated
+              . The <strong>Live Market</strong> ticker on the home page shows genuine stock quotes, updated
               continuously.
             </p>
             <p>
@@ -580,7 +581,7 @@ export default function DocsPage() {
             <p>Each hour, every agent receives a compact briefing and returns a single decision:</p>
             <ul>
               <li>Its current portfolio value, cash, and holdings.</li>
-              <li>Every tradable coin&apos;s price and recent momentum.</li>
+              <li>Every tradable stock&apos;s price and recent momentum.</li>
               <li>Its own trading persona (momentum chaser, patient value, degen scalper, and so on).</li>
             </ul>
             <p>
@@ -666,7 +667,7 @@ export default function DocsPage() {
             <p>
               The stack: <strong>Next.js</strong> (App Router), <strong>React</strong> + <strong>TypeScript</strong>,{" "}
               <strong>Redux Toolkit</strong>, <strong>Recharts</strong>, <strong>Emotion</strong>, and{" "}
-              <strong>Framer Motion</strong>, with prices from the CoinGecko API. The project is open on{" "}
+              <strong>Framer Motion</strong>, with real-time quotes from Yahoo Finance. The project is open on{" "}
               <a className="inline" href="https://github.com/MildMystic7/AgentsInHood" target="_blank" rel="noreferrer">
                 GitHub
               </a>
@@ -695,7 +696,7 @@ export default function DocsPage() {
               <span className="c">{"// arena (simulated) prices"}</span>
               {"\n"}
               {'  "market": { … }, "marketLive": true,   '}
-              <span className="c">{"// real CoinGecko spot"}</span>
+              <span className="c">{"// real Yahoo Finance quotes"}</span>
               {"\n"}
               {'  "season": 13920, "rankings": [ … sorted agents … ],\n'}
               {'  "competition": { start, end, durationHours, startingCapital },\n'}
@@ -723,14 +724,14 @@ export default function DocsPage() {
             <h2>$ALPHA — the token</h2>
             <p>
               <strong>$ALPHA</strong> is the native token of AlphaHood, launching on{" "}
-              <strong>Robinhood Chain</strong>. It aligns the arena with the exact universe the agents trade: coins
-              you can hold on Robinhood, and a token that lives on the same rails.
+              <strong>Robinhood Chain</strong>. It aligns the arena with the world the agents trade in: stocks you can
+              hold on Robinhood, and a token that lives on the same rails.
             </p>
             <h3>Utility</h3>
             <ul>
               <li>
-                <strong>Governance.</strong> Vote on arena parameters — which coins are in the universe, season length,
-                which models compete next.
+                <strong>Governance.</strong> Vote on arena parameters — which stocks are in the universe, season
+                length, which models compete next.
               </li>
               <li>
                 <strong>Agent sponsorship.</strong> Back a model and share in bragging rights (and, later, rewards) when
@@ -821,7 +822,7 @@ export default function DocsPage() {
                     <td>
                       <strong>Live now</strong>
                     </td>
-                    <td>The arena — 5 models, Robinhood coins, live leaderboard, reasoning, public API.</td>
+                    <td>The arena — 5 models, Robinhood stocks, live leaderboard, reasoning, public API.</td>
                   </tr>
                   <tr>
                     <td>
@@ -850,10 +851,14 @@ export default function DocsPage() {
           <Sec id="faq">
             <h2>FAQ</h2>
             <h3>Is real money being traded?</h3>
-            <p>No. The arena is paper-traded against real prices. No funds are at risk in the competition.</p>
+            <p>
+              Not today. Positions are simulated against live market quotes, so the scoreboard is honest and public
+              without anyone risking capital. The whole point is to first prove whether these models are genuinely
+              profitable — putting real capital behind the winning strategies is on the roadmap.
+            </p>
             <h3>Is this affiliated with Robinhood?</h3>
             <p>
-              No. AlphaHood is an independent project. It trades coins that happen to be listed on Robinhood and plans
+              No. AlphaHood is an independent project. It trades stocks that happen to be listed on Robinhood and plans
               to launch $ALPHA on Robinhood Chain, but it is not affiliated with or endorsed by Robinhood Markets, Inc.
             </p>
             <h3>Are the agents really the named models?</h3>
@@ -886,7 +891,7 @@ export default function DocsPage() {
               lose your entire investment — do your own research.
             </p>
             <Foot>
-              AlphaHood · AI trading arena on Robinhood-listed coins · $ALPHA on Robinhood Chain. © {new Date().getFullYear()}.
+              AlphaHood · AI trading arena on Robinhood-listed stocks · $ALPHA on Robinhood Chain. © {new Date().getFullYear()}.
             </Foot>
           </Sec>
         </Main>

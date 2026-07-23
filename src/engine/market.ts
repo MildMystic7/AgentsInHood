@@ -1,39 +1,26 @@
 import { TOKENS } from "./config";
 
-// Symbol → CoinGecko id (Robinhood-listed universe).
-const CG_IDS: Record<string, string> = {
-  BTC: "bitcoin",
-  ETH: "ethereum",
-  SOL: "solana",
-  XRP: "ripple",
-  DOGE: "dogecoin",
-  AVAX: "avalanche-2",
-  LINK: "chainlink",
-  UNI: "uniswap",
-  AAVE: "aave",
-  SHIB: "shiba-inu",
-  PEPE: "pepe",
-  BONK: "bonk",
-  WIF: "dogwifcoin",
-  PENGU: "pudgy-penguins",
-  USDC: "usd-coin",
-};
-
+// Stocks we quote (everything tradable — cash "USD" is pinned to 1).
+const SYMBOLS = TOKENS.filter((t) => t.symbol !== "USD").map((t) => t.symbol);
 const FALLBACK: Record<string, number> = Object.fromEntries(TOKENS.map((t) => [t.symbol, t.basePrice]));
 
-async function fetchCoinGecko(revalidate: number): Promise<Record<string, number> | null> {
-  const ids = Array.from(new Set(Object.values(CG_IDS))).join(",");
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`;
+// Yahoo Finance "spark" endpoint returns every symbol's live price in one call,
+// with no API key — perfect for a real-time anchor for Robinhood-listed stocks.
+async function fetchQuotes(revalidate: number): Promise<Record<string, number> | null> {
+  const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${SYMBOLS.join(",")}&range=1d&interval=1d`;
   try {
-    // `next.revalidate` puts the response in Vercel's shared Data Cache, so every
-    // serverless instance reads identical prices (and we stay within rate limits).
-    const res = await fetch(url, { next: { revalidate } });
+    const res = await fetch(url, {
+      headers: { "user-agent": "Mozilla/5.0 (compatible; AlphaHood/1.0)" },
+      next: { revalidate },
+    });
     if (!res.ok) return null;
-    const data = (await res.json()) as Record<string, { usd?: number }>;
+    const data = (await res.json()) as {
+      spark?: { result?: { symbol: string; response?: { meta?: { regularMarketPrice?: number } }[] }[] };
+    };
     const out: Record<string, number> = {};
-    for (const [sym, id] of Object.entries(CG_IDS)) {
-      const p = data?.[id]?.usd;
-      if (typeof p === "number" && p > 0) out[sym] = p;
+    for (const r of data?.spark?.result ?? []) {
+      const p = r.response?.[0]?.meta?.regularMarketPrice;
+      if (typeof p === "number" && p > 0) out[r.symbol] = p;
     }
     return Object.keys(out).length >= 4 ? out : null;
   } catch {
@@ -41,8 +28,8 @@ async function fetchCoinGecko(revalidate: number): Promise<Record<string, number
   }
 }
 
-// Remember the last successful real fetch so a transient rate-limit doesn't drop
-// us back to the static seed — real prices stay "sticky" for the demo.
+// Remember the last successful real fetch so a transient block doesn't drop us
+// back to the static seed — real prices stay "sticky".
 let lastAnchor: Record<string, number> | null = null;
 let lastLive: Record<string, number> | null = null;
 
@@ -51,7 +38,7 @@ let lastLive: Record<string, number> | null = null;
  * Cached for hours so a season's price levels don't shift underneath the replay.
  */
 export async function getAnchorPrices(): Promise<{ prices: Record<string, number>; live: boolean }> {
-  const real = await fetchCoinGecko(6 * 3600);
+  const real = await fetchQuotes(6 * 3600);
   if (real) {
     lastAnchor = { ...FALLBACK, ...real };
     return { prices: lastAnchor, live: true };
@@ -59,9 +46,9 @@ export async function getAnchorPrices(): Promise<{ prices: Record<string, number
   return { prices: lastAnchor ?? { ...FALLBACK }, live: lastAnchor !== null };
 }
 
-/** Live ticker prices: near-real-time real spot prices for the market strip. */
+/** Live ticker prices: near-real-time real quotes for the market strip. */
 export async function getLivePrices(): Promise<{ prices: Record<string, number>; live: boolean }> {
-  const real = await fetchCoinGecko(30);
+  const real = await fetchQuotes(60);
   if (real) {
     lastLive = { ...FALLBACK, ...real };
     return { prices: lastLive, live: true };

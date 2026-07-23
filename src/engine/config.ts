@@ -1,14 +1,11 @@
 import type { AgentConfig, TokenConfig, Competition } from "./types";
 
-// Native chains of the Robinhood-listed universe (EVM ids where they exist,
-// synthetic ids for non-EVM networks).
+// Exchanges the Robinhood-listed stocks trade on. (Kept under the name CHAINS
+// so the rest of the engine's routing fields don't need renaming.)
 export const CHAINS: Record<number, string> = {
-  1: "Ethereum",
-  43114: "Avalanche",
-  1151111081099710: "Solana",
-  2001: "Bitcoin",
-  2002: "XRP Ledger",
-  2003: "Dogecoin",
+  0: "Cash",
+  10: "NASDAQ",
+  20: "NYSE",
 };
 
 export const STARTING_CAPITAL = 1000;
@@ -91,34 +88,34 @@ export const AGENTS: AgentConfig[] = [
     tagline: "The dark horse — trained in the trenches, hyperactive and fearless",
     walletAddress: "0xA1pha0000000000000000000000000000MINIMAX",
     persona:
-      "You are a hyperactive degen scalper. You trade often, love volatility, and rotate aggressively into memecoins and small caps chasing outsized returns. High risk, high energy.",
+      "You are a hyperactive momentum scalper. You trade often, love volatility, and rotate aggressively into high-beta names — TSLA, NVDA, COIN, HOOD, PLTR, GME — chasing outsized returns. High risk, high energy.",
   },
 ];
 
 /**
- * Tradable universe: coins listed on Robinhood (matching our $ALPHA launch on
- * Robinhood Chain). USDC is the cash/settlement asset. Base prices are only the
- * offline fallback — live levels come from CoinGecko anchors.
+ * Tradable universe: stocks listed on Robinhood. USD is the cash/settlement
+ * asset. Base prices are only the offline fallback — live levels come from the
+ * real-time quote anchors (Yahoo Finance). Per-hour vol reflects each name's beta.
  */
 export const TOKENS: TokenConfig[] = [
-  { symbol: "USDC", name: "USD Coin", chain: "Ethereum", chainId: 1, basePrice: 1, vol: 0.0002, drift: 0 },
-  { symbol: "BTC", name: "Bitcoin", chain: "Bitcoin", chainId: 2001, basePrice: 60000, vol: 0.013, drift: 0.0004 },
-  { symbol: "ETH", name: "Ethereum", chain: "Ethereum", chainId: 1, basePrice: 1600, vol: 0.018, drift: 0.0003 },
-  { symbol: "SOL", name: "Solana", chain: "Solana", chainId: 1151111081099710, basePrice: 77, vol: 0.03, drift: 0.0006 },
-  { symbol: "XRP", name: "XRP", chain: "XRP Ledger", chainId: 2002, basePrice: 2.2, vol: 0.028, drift: 0.0002 },
-  { symbol: "DOGE", name: "Dogecoin", chain: "Dogecoin", chainId: 2003, basePrice: 0.16, vol: 0.045, drift: 0.0006 },
-  { symbol: "AVAX", name: "Avalanche", chain: "Avalanche", chainId: 43114, basePrice: 18, vol: 0.032, drift: 0.0003 },
-  { symbol: "LINK", name: "Chainlink", chain: "Ethereum", chainId: 1, basePrice: 7.4, vol: 0.028, drift: 0.0002 },
-  { symbol: "UNI", name: "Uniswap", chain: "Ethereum", chainId: 1, basePrice: 6.2, vol: 0.03, drift: 0.0001 },
-  { symbol: "AAVE", name: "Aave", chain: "Ethereum", chainId: 1, basePrice: 85, vol: 0.032, drift: 0.0003 },
-  { symbol: "SHIB", name: "Shiba Inu", chain: "Ethereum", chainId: 1, basePrice: 0.0000043, vol: 0.06, drift: 0.0005 },
-  { symbol: "PEPE", name: "Pepe", chain: "Ethereum", chainId: 1, basePrice: 0.0000023, vol: 0.07, drift: 0.001 },
-  { symbol: "BONK", name: "Bonk", chain: "Solana", chainId: 1151111081099710, basePrice: 0.000012, vol: 0.075, drift: 0.001 },
-  { symbol: "WIF", name: "dogwifhat", chain: "Solana", chainId: 1151111081099710, basePrice: 0.65, vol: 0.07, drift: 0.0008 },
-  { symbol: "PENGU", name: "Pudgy Penguins", chain: "Solana", chainId: 1151111081099710, basePrice: 0.0062, vol: 0.08, drift: 0.0012 },
+  { symbol: "USD", name: "US Dollar", chain: "Cash", chainId: 0, basePrice: 1, vol: 0, drift: 0 },
+  { symbol: "AAPL", name: "Apple", chain: "NASDAQ", chainId: 10, basePrice: 325, vol: 0.009, drift: 0.0003 },
+  { symbol: "MSFT", name: "Microsoft", chain: "NASDAQ", chainId: 10, basePrice: 480, vol: 0.009, drift: 0.0003 },
+  { symbol: "NVDA", name: "NVIDIA", chain: "NASDAQ", chainId: 10, basePrice: 212, vol: 0.02, drift: 0.0006 },
+  { symbol: "TSLA", name: "Tesla", chain: "NASDAQ", chainId: 10, basePrice: 374, vol: 0.024, drift: 0.0004 },
+  { symbol: "AMZN", name: "Amazon", chain: "NASDAQ", chainId: 10, basePrice: 220, vol: 0.012, drift: 0.0003 },
+  { symbol: "GOOGL", name: "Alphabet", chain: "NASDAQ", chainId: 10, basePrice: 195, vol: 0.011, drift: 0.0003 },
+  { symbol: "META", name: "Meta Platforms", chain: "NASDAQ", chainId: 10, basePrice: 620, vol: 0.013, drift: 0.0004 },
+  { symbol: "AMD", name: "AMD", chain: "NASDAQ", chainId: 10, basePrice: 165, vol: 0.02, drift: 0.0004 },
+  { symbol: "NFLX", name: "Netflix", chain: "NASDAQ", chainId: 10, basePrice: 900, vol: 0.014, drift: 0.0003 },
+  { symbol: "COIN", name: "Coinbase", chain: "NASDAQ", chainId: 10, basePrice: 320, vol: 0.03, drift: 0.0005 },
+  { symbol: "HOOD", name: "Robinhood Markets", chain: "NASDAQ", chainId: 10, basePrice: 104, vol: 0.028, drift: 0.0006 },
+  { symbol: "PLTR", name: "Palantir", chain: "NASDAQ", chainId: 10, basePrice: 75, vol: 0.026, drift: 0.0005 },
+  { symbol: "SOFI", name: "SoFi Technologies", chain: "NASDAQ", chainId: 10, basePrice: 22, vol: 0.028, drift: 0.0004 },
+  { symbol: "GME", name: "GameStop", chain: "NYSE", chainId: 20, basePrice: 28, vol: 0.035, drift: 0.0 },
 ];
 
-export const TRADABLE = TOKENS.filter((t) => t.symbol !== "USDC");
+export const TRADABLE = TOKENS.filter((t) => t.symbol !== "USD");
 
 export function competition(startISO: string): Competition {
   const start = new Date(startISO);

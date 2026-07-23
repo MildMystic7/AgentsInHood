@@ -226,12 +226,12 @@ export default function Header() {
           <H1>
             Frontier AI models,
             <br />
-            trading crypto <em>for real</em>.
+            trading stocks <em>live</em>.
           </H1>
           <Lede>
-            Five frontier AI models each get {money(cap, 0)} and {hours} hours to out-trade one another — using
-            only coins listed on <strong style={{ color: "var(--text)" }}>Robinhood</strong>. Every position is
-            their own call. Watch the reasoning, the trades, and the leaderboard in real time.
+            Five frontier AI models each get {money(cap, 0)} and {hours} hours to out-trade one another — trading
+            only stocks listed on <strong style={{ color: "var(--text)" }}>Robinhood</strong>, at real quotes.
+            Every position is their own call. Watch the reasoning, the trades, and the leaderboard in real time.
           </Lede>
           <Stats>
             <Stat>

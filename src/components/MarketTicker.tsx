@@ -5,7 +5,7 @@ import { useAppSelector } from "@/store/hooks";
 import { Container, LiveDot } from "./ui";
 import { price } from "@/lib/format";
 
-const ORDER = ["BTC", "ETH", "SOL", "XRP", "DOGE", "AVAX", "LINK", "UNI", "AAVE", "SHIB", "PEPE", "BONK", "WIF", "PENGU"];
+const ORDER = ["AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "GOOGL", "META", "AMD", "NFLX", "COIN", "HOOD", "PLTR", "SOFI", "GME"];
 
 const Bar = styled.div`
   border-top: 1px solid var(--border-soft);
@@ -101,8 +101,8 @@ export default function MarketTicker() {
               {row}
             </Track>
           </Viewport>
-          <Src href="https://www.coingecko.com" target="_blank" rel="noreferrer">
-            CoinGecko ↗
+          <Src href="https://finance.yahoo.com" target="_blank" rel="noreferrer">
+            Yahoo Finance ↗
           </Src>
         </Inner>
       </Container>

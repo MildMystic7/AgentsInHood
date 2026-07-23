@@ -85,7 +85,7 @@ export interface Competition {
 export interface SummaryResponse {
   agentData: Record<string, Agent>;
   tokenPrices: Record<string, number>;
-  /** Real live spot prices (CoinGecko) for the market ticker. */
+  /** Real live stock quotes (Yahoo Finance) for the market ticker. */
   market: Record<string, number>;
   marketLive: boolean;
   season: number;

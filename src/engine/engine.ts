@@ -33,10 +33,10 @@ import type {
 // a pure function of (EPOCH, now, BASE_SEED) replayed on demand, so every Vercel
 // serverless invocation computes the exact same leaderboard. A fresh "season"
 // (new competition, $1,000 each) starts every DURATION_HOURS ticks — the arena is
-// perpetually live. Token price *levels* are anchored to real CoinGecko prices.
+// perpetually live. Stock price *levels* are anchored to real Yahoo Finance quotes.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const USDC = TOKENS.find((t) => t.symbol === "USDC")!;
+const CASH = TOKENS.find((t) => t.symbol === "USD")!;
 const tokenBySymbol = Object.fromEntries(TOKENS.map((t) => [t.symbol, t]));
 const MOMENTUM_WINDOW = 4;
 
@@ -137,7 +137,7 @@ function contextFor(a: EngineAgent, prices: PriceFeed, momentum: Record<string, 
 
 // ── Trade application ────────────────────────────────────────────────────────
 function applyDecision(a: EngineAgent, d: Decision, prices: PriceFeed, hour: number, ts: number): void {
-  const symbol = d.symbol && tokenBySymbol[d.symbol] && d.symbol !== "USDC" ? d.symbol : undefined;
+  const symbol = d.symbol && tokenBySymbol[d.symbol] && d.symbol !== "USD" ? d.symbol : undefined;
   const amount = d.usdAmount ?? 0;
   let logTrade = "No trade this cycle";
 
@@ -182,7 +182,7 @@ function buy(a: EngineAgent, symbol: string, usd: number, prices: PriceFeed, hou
   pos.avgCost = newTokens > 0 ? (pos.avgCost * pos.tokens + price * tokens) / newTokens : price;
   pos.tokens = newTokens;
   a.holdings.set(symbol, pos);
-  record(a, "BUY", symbol, tokens, price, usd, hour, ts, reasoning, USDC.chainId, tokenBySymbol[symbol].chainId, "USDC", symbol);
+  record(a, "BUY", symbol, tokens, price, usd, hour, ts, reasoning, CASH.chainId, tokenBySymbol[symbol].chainId, "USD", symbol);
 }
 
 function sell(a: EngineAgent, symbol: string, usd: number, prices: PriceFeed, hour: number, ts: number, reasoning: string): void {
@@ -192,7 +192,7 @@ function sell(a: EngineAgent, symbol: string, usd: number, prices: PriceFeed, ho
   pos.tokens -= tokens;
   a.cash += tokens * price;
   if (pos.tokens <= 1e-9) a.holdings.delete(symbol);
-  record(a, "SELL", symbol, tokens, price, tokens * price, hour, ts, reasoning, tokenBySymbol[symbol].chainId, USDC.chainId, symbol, "USDC");
+  record(a, "SELL", symbol, tokens, price, tokens * price, hour, ts, reasoning, tokenBySymbol[symbol].chainId, CASH.chainId, symbol, "USD");
 }
 
 function swap(a: EngineAgent, fromSym: string, toSym: string, usd: number, prices: PriceFeed, hour: number, ts: number, reasoning: string): void {

@@ -57,7 +57,7 @@ function userPrompt(ctx: DecisionContext): string {
     .map((t) => `${t.symbol} $${(ctx.prices[t.symbol] ?? 0).toPrecision(4)} (${(ctx.momentum[t.symbol] ?? 0) >= 0 ? "+" : ""}${(ctx.momentum[t.symbol] ?? 0).toFixed(2)}% recent)`)
     .join("\n");
   return [
-    `Hour ${ctx.hour}. Portfolio value $${ctx.totalValue.toFixed(2)}, cash (USDC) $${ctx.cashUSDC.toFixed(2)}.`,
+    `Hour ${ctx.hour}. Portfolio value $${ctx.totalValue.toFixed(2)}, cash $${ctx.cashUSDC.toFixed(2)}.`,
     `Current holdings: ${holdings}.`,
     `Market:\n${market}`,
     `Make your move for this hour.`,
@@ -176,7 +176,7 @@ export function mockDecide(agent: AgentConfig, ctx: DecisionContext, rand: () =>
   const ranked = [...ctx.tradable].sort((a, b) => (ctx.momentum[b.symbol] ?? 0) - (ctx.momentum[a.symbol] ?? 0));
   const hottest = ranked[0];
   const coldest = ranked[ranked.length - 1];
-  const memecoins = ctx.tradable.filter((t) => ["DOGE", "SHIB", "PEPE", "BONK", "WIF", "PENGU"].includes(t.symbol));
+  const highBeta = ctx.tradable.filter((t) => ["TSLA", "NVDA", "AMD", "COIN", "HOOD", "PLTR", "SOFI", "GME"].includes(t.symbol));
   const heldSymbols = new Set(ctx.holdings.map((h) => h.symbol));
   const cash = ctx.cashUSDC;
 
@@ -230,7 +230,7 @@ export function mockDecide(agent: AgentConfig, ctx: DecisionContext, rand: () =>
       const underexposed = ctx.tradable.find((t) => !heldSymbols.has(t.symbol) && mom(t.symbol) > 0);
       if (cash > 80 && underexposed && r > 0.35) {
         const size = Math.min(cash * 0.25, cash);
-        return { action: "BUY", symbol: underexposed.symbol, usdAmount: round(size), reasoning: `Adding ${underexposed.symbol} on ${underexposed.chain} (${fmt(underexposed.symbol)}) to diversify across chains and improve the risk-adjusted profile.` };
+        return { action: "BUY", symbol: underexposed.symbol, usdAmount: round(size), reasoning: `Adding ${underexposed.symbol} (${fmt(underexposed.symbol)}) on ${underexposed.chain} to diversify the book and improve the risk-adjusted profile.` };
       }
       const overweight = [...ctx.holdings].sort((a, b) => b.value - a.value)[0];
       if (overweight && overweight.value > ctx.totalValue * 0.4) return { action: "SELL", symbol: overweight.symbol, usdAmount: round(overweight.value * 0.3), reasoning: `${overweight.symbol} is now oversized in the book; trimming to manage concentration and cap drawdown.` };
@@ -238,11 +238,11 @@ export function mockDecide(agent: AgentConfig, ctx: DecisionContext, rand: () =>
     }
     case "minimax":
     default: {
-      // Degen scalper: hyperactive, loves memecoins.
+      // Hyperactive momentum scalper: loves high-beta names and fast rotations.
       if (cash > 40 && r > 0.25) {
-        const target = memecoins.length && r > 0.4 ? pick(memecoins, r) : hottest;
+        const target = highBeta.length && r > 0.4 ? pick(highBeta, r) : hottest;
         const size = Math.min(cash * (0.4 + r * 0.4), cash);
-        return { action: "BUY", symbol: target.symbol, usdAmount: round(size), reasoning: `Sending it into ${target.symbol} (${fmt(target.symbol)}) on ${target.chain} — volatility is the opportunity, aping the momentum before it runs.` };
+        return { action: "BUY", symbol: target.symbol, usdAmount: round(size), reasoning: `Piling into ${target.symbol} (${fmt(target.symbol)}) — the high-beta names are where the moves are, and I want in before the tape confirms.` };
       }
       if (ctx.holdings.length && r < 0.4) {
         const flip = pick(ctx.holdings, r);

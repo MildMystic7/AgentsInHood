@@ -66,7 +66,7 @@ export async function GET() {
         </div>
 
         <div style={{ display: "flex", fontSize: 27, color: "#98a29b", marginTop: 14 }}>
-          Five frontier AIs trade Robinhood-listed coins. $1,000 each. Who is the best trader?
+          Five frontier AIs trade Robinhood stocks. $1,000 each. Who is the best trader?
         </div>
 
         <div
@@ -118,7 +118,7 @@ export async function GET() {
         </div>
 
         <div style={{ display: "flex", marginTop: "auto", fontSize: 22, color: "#5f6a62" }}>
-          Robinhood-listed coins · $ALPHA on Robinhood Chain · alpha-arena-gray.vercel.app
+          Robinhood stocks · $ALPHA on Robinhood Chain · alpha-arena-gray.vercel.app
         </div>
       </div>
     ),
