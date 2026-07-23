@@ -1,18 +1,25 @@
 import { NextResponse } from "next/server";
 import { getHistoryResponse, getSummaryResponse, seasonAndHour } from "@/engine/engine";
 import { kvConfigured, kvGet, kvSet } from "@/engine/kv";
-import { escapeHtml, sendTelegramMessages, telegramConfigured } from "@/engine/telegram";
+import { escapeHtml, sendTelegramMessage, telegramConfigured } from "@/engine/telegram";
 import { AGENTS } from "@/engine/config";
 import type { Trade } from "@/engine/types";
 
 export const dynamic = "force-dynamic";
 
-// How far back we're willing to catch up in one run. Bounds the worst case
-// (arena rolled over a new season, or this endpoint wasn't polled for a while)
-// so a single invocation never has to fire off hundreds of messages.
-const MAX_BACKLOG_HOURS = 24;
-const EVENTS_PER_MESSAGE = 5;
-const MAX_MESSAGES_PER_RUN = 20;
+// ─────────────────────────────────────────────────────────────────────────────
+// Drip-feed design: new trades are enqueued as soon as they're detected, but at
+// most ONE queued chunk is actually sent per invocation — gated by a randomized
+// 1–10 minute cooldown stored in KV. However often this endpoint gets polled
+// (every few seconds or every few minutes), Telegram only ever sees a slow,
+// human-watchable trickle, never a burst of everything at once.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MAX_BACKLOG_HOURS = 24; // how far back we'll ever catch up in one go
+const EVENTS_PER_CHUNK = 3; // trades grouped into one Telegram message
+const MAX_QUEUE_LENGTH = 60; // self-heals instead of growing forever if something's stuck
+const MIN_GAP_SECONDS = 60; // 1 minute
+const MAX_GAP_SECONDS = 600; // 10 minutes
 const MARKER_TTL_SECONDS = 60 * 60 * 24 * 400; // ~400 days — effectively permanent
 
 const EMOJI: Record<Trade["type"], string> = { BUY: "🟢", SELL: "🔴", SWAP: "🟡" };
@@ -34,6 +41,20 @@ function formatEvent(agentName: string, t: Trade, season: number): string {
   ].join("\n");
 }
 
+function randomGapMs(): number {
+  return Math.floor(MIN_GAP_SECONDS + Math.random() * (MAX_GAP_SECONDS - MIN_GAP_SECONDS)) * 1000;
+}
+
+function parseQueue(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 async function handle(req: Request) {
   if (!isAuthorized(req)) {
     return NextResponse.json({ ok: false, reason: "unauthorized" }, { status: 401 });
@@ -46,12 +67,21 @@ async function handle(req: Request) {
   }
 
   const { season, hour } = seasonAndHour();
-  const [storedSeason, storedHour] = await Promise.all([kvGet("notify:season"), kvGet("notify:hour")]);
+  const [storedSeason, storedHour, queueRaw, nextSendAtRaw] = await Promise.all([
+    kvGet("notify:season"),
+    kvGet("notify:hour"),
+    kvGet("notify:queue"),
+    kvGet("notify:nextSendAt"),
+  ]);
+
   const hadPriorState = storedSeason !== null;
   const sameSeason = hadPriorState && Number(storedSeason) === season;
   const rawLastHour = sameSeason ? Number(storedHour ?? -1) : -1;
   const effectiveLastHour = Math.max(rawLastHour, hour - MAX_BACKLOG_HOURS);
 
+  let queue = parseQueue(queueRaw);
+
+  // ── Enqueue anything new since the last check ──────────────────────────────
   const [summary, history] = await Promise.all([getSummaryResponse(), getHistoryResponse()]);
   const agentName: Record<string, string> = {};
   for (const a of Object.values(summary.agentData)) agentName[a.id] = a.name;
@@ -67,28 +97,45 @@ async function handle(req: Request) {
   }
   events.sort((a, b) => a.trade.hour - b.trade.hour);
 
-  const messages: string[] = [];
   if (hadPriorState && !sameSeason) {
-    messages.push(`🚀 <b>New season</b> — S${season} is live. All agents reset to $1,000.`);
+    queue.push(`🚀 <b>New season</b> — S${season} is live. All agents reset to $1,000.`);
+  }
+  for (let i = 0; i < events.length; i += EVENTS_PER_CHUNK) {
+    const chunk = events.slice(i, i + EVENTS_PER_CHUNK);
+    queue.push(chunk.map((e) => formatEvent(agentName[e.agentId] ?? e.agentId, e.trade, season)).join("\n\n———\n\n"));
+  }
+  if (queue.length > MAX_QUEUE_LENGTH) queue = queue.slice(queue.length - MAX_QUEUE_LENGTH);
+
+  // ── Send at most one queued chunk, gated by the random cooldown ────────────
+  const now = Date.now();
+  let nextSendAtMs = nextSendAtRaw ? Number(nextSendAtRaw) : 0;
+  let sent = 0;
+
+  if (queue.length > 0 && now >= nextSendAtMs) {
+    const [msg, ...rest] = queue;
+    const ok = await sendTelegramMessage(msg);
+    if (ok) {
+      queue = rest;
+      sent = 1;
+    }
+    nextSendAtMs = now + randomGapMs(); // reschedule regardless, so a failure can't hammer Telegram in a loop
   }
 
-  for (let i = 0; i < events.length; i += EVENTS_PER_MESSAGE) {
-    const chunk = events.slice(i, i + EVENTS_PER_MESSAGE);
-    messages.push(chunk.map((e) => formatEvent(agentName[e.agentId] ?? e.agentId, e.trade, season)).join("\n\n———\n\n"));
-  }
-
-  const toSend = messages.slice(0, MAX_MESSAGES_PER_RUN);
-  const sent = toSend.length > 0 ? await sendTelegramMessages(toSend) : 0;
-
-  await Promise.all([kvSet("notify:season", String(season), MARKER_TTL_SECONDS), kvSet("notify:hour", String(hour), MARKER_TTL_SECONDS)]);
+  await Promise.all([
+    kvSet("notify:season", String(season), MARKER_TTL_SECONDS),
+    kvSet("notify:hour", String(hour), MARKER_TTL_SECONDS),
+    kvSet("notify:queue", JSON.stringify(queue), MARKER_TTL_SECONDS),
+    kvSet("notify:nextSendAt", String(nextSendAtMs), MARKER_TTL_SECONDS),
+  ]);
 
   return NextResponse.json({
     ok: true,
     season,
     hour,
-    events: events.length,
-    messagesQueued: messages.length,
-    messagesSent: sent,
+    newlyEnqueued: events.length,
+    queueDepth: queue.length,
+    sentThisRun: sent,
+    nextSendInSeconds: Math.max(0, Math.round((nextSendAtMs - now) / 1000)),
   });
 }
 

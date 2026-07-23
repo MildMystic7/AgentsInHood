@@ -9,15 +9,31 @@ account); everything else is already built and wired up in the code.
 
 There's no server running in the background — the site is fully serverless.
 Instead, a scheduled **GitHub Action** (`.github/workflows/telegram-notify.yml`)
-pings `/api/notify/telegram` every ~5 minutes. That endpoint:
+pings `/api/notify/telegram` every ~5 minutes (GitHub's practical floor for free
+scheduled workflows — see the note below). That endpoint:
 
 1. Figures out the current season/hour (same deterministic clock the arena uses).
-2. Reads a small marker from your KV store: "last hour I already notified".
-3. Sends any **new trades** since then to Telegram — batched, with each trade's
-   reasoning attached — then updates the marker.
-4. Skips `HOLD` cycles entirely (only real trades get sent, so it doesn't spam).
-5. Caps how far back it will ever catch up (24 hours) so a missed run or a
-   season rollover can't dump a huge backlog into your chat at once.
+2. Reads a small **queue** from your KV store — trades detected but not yet sent.
+3. Adds any new trades since the last check to the queue (grouped in chunks of 3,
+   each with the agent's own reasoning attached). Skips `HOLD` cycles entirely —
+   only real trades get queued, so it never spams.
+4. Sends **at most one queued chunk** per invocation — gated by a random
+   1–10 minute cooldown stored in KV. However often this endpoint gets pinged,
+   Telegram only ever sees a slow, human-watchable trickle — never a burst of
+   everything at once.
+5. Caps how far back it will ever catch up (24 hours of simulated time, and a
+   maximum queue depth) so a missed run or a season rollover can't flood your
+   chat — it just drains a bit slower until it's caught up.
+
+> **On the 1–10 minute pacing:** GitHub's free scheduled workflows have a
+> documented floor of ~5 minutes between runs (and can occasionally run later
+> under load). That means the *fastest* this can realistically deliver a
+> message is roughly every 5 minutes, even though the code's cooldown allows
+> as little as 1. If you want the full 1–10 minute range in practice, add a
+> free external minute-level cron (e.g. [cron-job.org](https://cron-job.org))
+> pinging the same URL every minute — the drip logic already handles being
+> polled that often correctly, it just needs a caller that shows up that often.
+> The GitHub Action works fine on its own if ~5–15 minute pacing is close enough.
 
 ## 1. Create the bot
 
@@ -82,8 +98,13 @@ In the GitHub repo → **Settings → Secrets and variables → Actions**:
   ```
 - A healthy response looks like:
   ```json
-  { "ok": true, "season": 13920, "hour": 42, "events": 3, "messagesQueued": 1, "messagesSent": 1 }
+  { "ok": true, "season": 13920, "hour": 42, "newlyEnqueued": 3, "queueDepth": 2, "sentThisRun": 1, "nextSendInSeconds": 347 }
   ```
+  `newlyEnqueued` is how many new trades were just added to the queue this run,
+  `queueDepth` is how many chunks are still waiting, `sentThisRun` is 0 or 1
+  (this endpoint only ever sends one message per call), and `nextSendInSeconds`
+  is the randomized cooldown before another message is allowed out.
+
   `ok: false` with a `reason` field means something isn't configured yet
   (`telegram_not_configured`, `kv_not_configured`, or `unauthorized`).
 

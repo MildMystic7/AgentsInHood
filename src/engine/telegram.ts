@@ -31,14 +31,3 @@ export async function sendTelegramMessage(text: string): Promise<boolean> {
     return false;
   }
 }
-
-/** Sends several messages in order with a small delay to stay under Telegram's rate limit. */
-export async function sendTelegramMessages(texts: string[], delayMs = 250): Promise<number> {
-  let sent = 0;
-  for (const text of texts) {
-    const ok = await sendTelegramMessage(text);
-    if (ok) sent += 1;
-    if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));
-  }
-  return sent;
-}
