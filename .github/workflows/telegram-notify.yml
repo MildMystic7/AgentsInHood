@@ -1,0 +1,17 @@
+name: Telegram trade notifications
+
+on:
+  schedule:
+    # GitHub's practical minimum for scheduled workflows is ~5 minutes; runs may
+    # be delayed slightly under load. That's fine — the endpoint catches up.
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the notify endpoint
+        run: |
+          curl -sS --max-time 25 -X POST "${{ vars.SITE_URL || 'https://alpha-arena-gray.vercel.app' }}/api/notify/telegram" \
+            -H "x-notify-secret: ${{ secrets.NOTIFY_SECRET }}"

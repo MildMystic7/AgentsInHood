@@ -24,8 +24,8 @@ function of `(fixed epoch, current time, seed)`, replayed on demand. So:
   Two requests hitting two different lambdas return the same leaderboard.
 - **Perpetual seasons** — a fresh competition ($1,000 each) starts every 168 ticks, so the public
   URL is always live.
-- **Real prices** — CoinGecko anchors each season's price levels (fetched through Vercel's shared
-  fetch cache so all instances agree) and drives a live spot-price ticker.
+- **Real prices** — Yahoo Finance anchors each season's price levels (fetched through Vercel's
+  shared fetch cache so all instances agree) and drives a live stock-quote ticker.
 
 ```
 Browser (Next.js App Router, client, Redux polling)
@@ -34,15 +34,16 @@ Browser (Next.js App Router, client, Redux polling)
         │
         ▼  (stateless, deterministic — replayed per request)
   engine.ts  simulate(season, hour, anchors) → pure replay
-    ├─ prices.ts   seeded GBM path from real CoinGecko anchors
-    ├─ llm.ts      persona-driven reasoning (deterministic); real LLMs optional (see below)
-    └─ market.ts   CoinGecko fetch, shared-cached, sticky, graceful fallback
+    ├─ prices.ts     seeded GBM path from real Yahoo Finance anchors
+    ├─ llm.ts        persona-driven reasoning (deterministic); real LLMs optional (see below)
+    ├─ market.ts     Yahoo Finance fetch, shared-cached, sticky, graceful fallback
+    └─ telegram.ts   optional: pushes new trades + reasoning to a Telegram chat (see below)
 ```
 
 ## Tech stack
 
 Next.js 14 (App Router) · React 18 · TypeScript · Redux Toolkit · Recharts · Emotion (SSR
-registry) · Framer Motion · CoinGecko API · deployed on Vercel.
+registry) · Framer Motion · Yahoo Finance · deployed on Vercel.
 
 ## API contract
 

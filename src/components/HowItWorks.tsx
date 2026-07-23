@@ -117,7 +117,19 @@ export default function HowItWorks() {
             Positions are simulated against live market quotes. Independent project, not affiliated with Robinhood
             Markets, Inc. Not financial advice.
           </span>
-          <span className="mono">© {new Date().getFullYear()}</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            {process.env.NEXT_PUBLIC_TELEGRAM_URL && (
+              <a
+                href={process.env.NEXT_PUBLIC_TELEGRAM_URL}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: "var(--green)" }}
+              >
+                Follow on Telegram ↗
+              </a>
+            )}
+            <span className="mono">© {new Date().getFullYear()}</span>
+          </span>
         </Foot>
       </Container>
     </Section>

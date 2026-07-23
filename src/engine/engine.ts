@@ -57,7 +57,7 @@ interface EngineAgent {
   totalTrades: number;
 }
 
-function seasonAndHour(): { season: number; hour: number } {
+export function seasonAndHour(): { season: number; hour: number } {
   const ticks = Math.max(0, Math.floor((Date.now() - EPOCH) / (TICK_SECONDS * 1000)));
   return { season: Math.floor(ticks / DURATION_HOURS), hour: ticks % DURATION_HOURS };
 }

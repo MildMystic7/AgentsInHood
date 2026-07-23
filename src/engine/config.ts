@@ -12,7 +12,8 @@ export const STARTING_CAPITAL = 1000;
 export const DURATION_HOURS = 168; // 7 days
 
 // Tick cadence: seconds of real time that represent one simulated "hour".
-export const TICK_SECONDS = Number(process.env.ARENA_TICK_SECONDS ?? 7);
+// Nudged up slightly from 7s so the tape (and the Telegram feed) breathes a bit more.
+export const TICK_SECONDS = Number(process.env.ARENA_TICK_SECONDS ?? 10);
 
 // Fixed epoch anchoring the perpetual "seasons". Because the whole simulation is
 // derived deterministically from (epoch, now, seed), every serverless instance
