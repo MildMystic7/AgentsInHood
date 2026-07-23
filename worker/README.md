@@ -4,11 +4,32 @@ A persistent process (deployed on Railway) that runs alongside the main
 Vercel-hosted site. Unlike the site's stateless, deterministic engine, this is
 a real, always-on Node process — each agent thinks on its own independent
 random **2–10 minute** timer, and every real trade it makes is permanently
-logged on the **Base Sepolia testnet** blockchain (zero real financial value —
-testnet ETH is free from faucets and can't be exchanged for anything real).
+logged on **Robinhood Chain's public testnet** (chain id `46630`) — zero real
+financial value, but the same chain (and, later, the same Stock Token
+standard) the real thing runs on. Testnet ETH is free from the faucet and
+can't be exchanged for anything real.
 
 Trades are penny-sized ($0.01–$0.05), matching the size of the real wallet
 this is a rehearsal for. Starting capital is $8, same as the real wallet.
+
+## Why Robinhood Chain (not a generic testnet)
+
+Robinhood Chain is a real, live Arbitrum Orbit L2 — public testnet since
+Feb 2026, mainnet since Jul 1 2026 — purpose-built for tokenized stocks
+("Stock Tokens": AAPL, TSLA, etc. as ERC-20s, tradeable 24/7 with real DEX
+liquidity via Arcus/Uniswap/Lighter on mainnet). That makes it the correct
+target for this project, not just "a" testnet.
+
+**Current scope is intentionally the logging model, not real Stock Token
+swaps yet.** Stock Tokens exist on testnet too, but per Robinhood's own docs
+"testnet token addresses differ from mainnet" and "not all Stock Tokens may be
+deployed on testnet" — and no DEX/router address is documented for either
+network. Wiring up real swaps against unverified/guessed contract addresses
+would be actively unsafe, so `AlphaHoodLedger.sol` sticks to logging (agentId,
+action, symbol, USD size, reasoning) as an on-chain event, which needs no
+third-party contract addresses at all. Swapping real Stock Tokens is a natural
+phase 2 once the testnet token + DEX addresses are confirmed from Robinhood's
+docs (https://docs.robinhood.com/chain) rather than guessed.
 
 ## Why a separate service
 
@@ -35,8 +56,9 @@ npm run new-wallet
 ```
 
 Prints a fresh address + private key. **Never reuse a real/mainnet key here.**
-Fund the printed address with free Base Sepolia test ETH:
-- https://www.alchemy.com/faucets/base-sepolia (or any other Base Sepolia faucet)
+Fund the printed address with free Robinhood Chain testnet ETH:
+- https://faucet.testnet.chain.robinhood.com/ (connect/paste the address; this
+  step needs a browser — it's protected against scripted claims)
 
 Put the private key in `worker/.env` as `WORKER_PRIVATE_KEY=...` (copy
 `.env.example` to `.env` first).
@@ -50,7 +72,7 @@ npm run deploy
 
 Prints the deployed contract address — put it in `.env` as
 `LEDGER_CONTRACT_ADDRESS=...`. You can view the contract and every trade it
-ever logs at `https://sepolia.basescan.org/address/<address>`.
+ever logs at `https://explorer.testnet.chain.robinhood.com/address/<address>`.
 
 The contract (`contracts/AlphaHoodLedger.sol`) never holds funds — it only
 emits events. Only the deploying wallet (the "operator") can log trades, which
@@ -73,7 +95,7 @@ npm run dev
 
 Watch the console — each agent logs when it thinks, trades, or skips. Trades
 will start appearing in Telegram (with a "View on-chain" link) and on the
-BaseScan contract page as they happen (every 2–10 minutes per agent).
+Robinhood Chain testnet explorer as they happen (every 2–10 minutes per agent).
 
 Check `http://localhost:3000/state` any time for the current portfolio JSON.
 

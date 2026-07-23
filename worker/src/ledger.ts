@@ -12,10 +12,14 @@ export function ledgerConfigured(): boolean {
   return Boolean(process.env.WORKER_PRIVATE_KEY && process.env.LEDGER_CONTRACT_ADDRESS);
 }
 
+// Robinhood Chain testnet — an Arbitrum Orbit L2, chain id 46630.
+const ROBINHOOD_TESTNET_CHAIN_ID = 46630;
+
 function getContract(): Contract {
   if (contract) return contract;
-  const rpcUrl = process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org";
-  const provider = new JsonRpcProvider(rpcUrl);
+  const rpcUrl = process.env.ROBINHOOD_TESTNET_RPC_URL || "https://rpc.testnet.chain.robinhood.com";
+  // Explicit network avoids ethers' auto-detection dance for a chain it doesn't ship presets for.
+  const provider = new JsonRpcProvider(rpcUrl, { chainId: ROBINHOOD_TESTNET_CHAIN_ID, name: "robinhood-testnet" });
   wallet = new Wallet(process.env.WORKER_PRIVATE_KEY!, provider);
   contract = new Contract(process.env.LEDGER_CONTRACT_ADDRESS!, ABI, wallet);
   return contract;
@@ -41,5 +45,5 @@ export async function logTradeOnChain(agentId: string, action: "BUY" | "SELL", s
 }
 
 export function explorerTxUrl(hash: string): string {
-  return `https://sepolia.basescan.org/tx/${hash}`;
+  return `https://explorer.testnet.chain.robinhood.com/tx/${hash}`;
 }
