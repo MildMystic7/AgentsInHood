@@ -1,3 +1,4 @@
+import "dotenv/config"; // loads worker/.env locally; on Railway, env comes from the platform (no .env, harmless)
 import { createServer } from "http";
 import { AGENTS } from "./config";
 import { getQuoteSnapshot } from "./quotes";

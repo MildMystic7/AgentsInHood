@@ -2,7 +2,7 @@
   "name": "alphahood-worker",
   "version": "0.1.0",
   "private": true,
-  "description": "Persistent Railway worker for AlphaHood: real per-agent decision timers (2-10min) and on-chain trade logging on Base Sepolia testnet.",
+  "description": "Persistent Railway worker for AlphaHood: real per-agent decision timers (2-10min) and on-chain trade logging on Robinhood Chain testnet.",
   "scripts": {
     "compile": "hardhat compile",
     "new-wallet": "node scripts/new-wallet.js",
@@ -12,11 +12,11 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "ethers": "^6.13.4"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
-    "dotenv": "^16.4.5",
     "hardhat": "^2.22.17",
     "tsx": "^4.19.2",
     "typescript": "^5.6.2"
