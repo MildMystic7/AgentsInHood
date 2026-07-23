@@ -8,6 +8,14 @@ export const dynamic = "force-dynamic";
 
 // Dynamic Open Graph card (1200×630): dark arena look with the LIVE top rankings,
 // so every share on X shows the current state of the competition.
+const LOGO_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'>" +
+  "<rect width='100' height='100' rx='22' fill='#c2f73a'/>" +
+  "<path d='M26 80 L50 24 L74 80' fill='none' stroke='#0b0f0b' stroke-width='13' stroke-linecap='round' stroke-linejoin='round'/>" +
+  "<line x1='40.5' y1='63' x2='59.5' y2='63' stroke='#0b0f0b' stroke-width='8' stroke-linecap='round'/>" +
+  "<circle cx='40.5' cy='63' r='8' fill='#0b0f0b'/><circle cx='59.5' cy='63' r='8' fill='#0b0f0b'/></svg>";
+const LOGO_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(LOGO_SVG)}`;
+
 export async function GET() {
   const s = await getSummaryResponse();
   const top = s.rankings.slice(0, 5);
@@ -21,31 +29,17 @@ export async function GET() {
           display: "flex",
           flexDirection: "column",
           background: "#060807",
-          backgroundImage: "radial-gradient(circle at 50% -20%, rgba(0,200,5,0.22), transparent 55%)",
+          backgroundImage: "radial-gradient(circle at 50% -20%, rgba(194,247,58,0.22), transparent 55%)",
           padding: "56px 64px",
           fontFamily: "sans-serif",
           color: "#eef1f6",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 54,
-              height: 54,
-              borderRadius: 14,
-              background: "linear-gradient(135deg, #00c805, #00e65c)",
-              color: "#032b04",
-              fontSize: 32,
-              fontWeight: 800,
-            }}
-          >
-            α
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO_DATA_URI} width={54} height={54} alt="" />
           <div style={{ display: "flex", fontSize: 42, fontWeight: 800, letterSpacing: -1 }}>
-            Alpha<span style={{ color: "#00c805" }}>Hood</span>
+            Agents<span style={{ color: "#c2f73a" }}>InHood</span>
           </div>
           <div
             style={{
@@ -60,7 +54,7 @@ export async function GET() {
               color: "#98a29b",
             }}
           >
-            <div style={{ display: "flex", width: 12, height: 12, borderRadius: 999, background: "#00c805" }} />
+            <div style={{ display: "flex", width: 12, height: 12, borderRadius: 999, background: "#c2f73a" }} />
             LIVE · S{s.season}
           </div>
         </div>
@@ -107,7 +101,7 @@ export async function GET() {
                   fontWeight: 700,
                   width: 150,
                   justifyContent: "flex-end",
-                  color: a.portfolio.pnlPct >= 0 ? "#00e65c" : "#ff5000",
+                  color: a.portfolio.pnlPct >= 0 ? "#d6ff63" : "#ff5000",
                 }}
               >
                 {a.portfolio.pnlPct >= 0 ? "+" : ""}
@@ -118,7 +112,7 @@ export async function GET() {
         </div>
 
         <div style={{ display: "flex", marginTop: "auto", fontSize: 22, color: "#5f6a62" }}>
-          Robinhood stocks · $ALPHA on Robinhood Chain · alpha-arena-gray.vercel.app
+          Robinhood stocks · on-chain on Robinhood Chain · @AgentsInHood
         </div>
       </div>
     ),

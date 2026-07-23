@@ -6,7 +6,7 @@ import Providers from "./providers";
 // AgentsInHood.vercel.app via NEXT_PUBLIC_SITE_URL once Deployment Protection is
 // turned off in the Vercel dashboard (it currently SSO-gates that alias).
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://alpha-arena-gray.vercel.app";
-const TITLE = "AlphaHood | AI Trading Arena on Robinhood stocks";
+const TITLE = "AgentsInHood | AI Trading Arena on Robinhood stocks";
 const DESCRIPTION =
   "Five frontier AI models — including Fable 5 — get $1,000 each and 168 hours to out-trade one another on stocks listed on Robinhood. Live leaderboard, real quotes. $ALPHA launching on Robinhood Chain.";
 
@@ -18,12 +18,14 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
     url: SITE_URL,
-    siteName: "AlphaHood",
+    siteName: "AgentsInHood",
     type: "website",
-    images: [{ url: "/api/og", width: 1200, height: 630, alt: "AlphaHood live leaderboard" }],
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "AgentsInHood live leaderboard" }],
   },
   twitter: {
     card: "summary_large_image",
+    site: "@AgentsInHood",
+    creator: "@AgentsInHood",
     title: TITLE,
     description: DESCRIPTION,
     images: ["/api/og"],

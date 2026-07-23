@@ -74,11 +74,11 @@ export const Pill = styled.span<{ tone?: "green" | "red" | "dim" | "accent" | "g
   border-radius: 999px;
   background: ${(p) =>
     p.tone === "green"
-      ? "rgba(0,200,5,0.12)"
+      ? "rgba(194,247,58,0.12)"
       : p.tone === "red"
         ? "rgba(255,80,0,0.12)"
         : p.tone === "accent"
-          ? "rgba(0,200,5,0.12)"
+          ? "rgba(194,247,58,0.12)"
           : p.tone === "gold"
             ? "rgba(245,179,1,0.12)"
             : "var(--panel-3)"};
@@ -115,17 +115,17 @@ export const LiveDot = styled.span<{ active?: boolean }>`
   height: 8px;
   border-radius: 50%;
   background: ${(p) => (p.active ? "var(--green)" : "var(--faint)")};
-  box-shadow: ${(p) => (p.active ? "0 0 0 0 rgba(0,200,5,0.6)" : "none")};
+  box-shadow: ${(p) => (p.active ? "0 0 0 0 rgba(194,247,58,0.6)" : "none")};
   animation: ${(p) => (p.active ? "pulse 1.6s infinite" : "none")};
   @keyframes pulse {
     0% {
-      box-shadow: 0 0 0 0 rgba(0, 200, 5, 0.5);
+      box-shadow: 0 0 0 0 rgba(194, 247, 58, 0.5);
     }
     70% {
-      box-shadow: 0 0 0 7px rgba(0, 200, 5, 0);
+      box-shadow: 0 0 0 7px rgba(194, 247, 58, 0);
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(0, 200, 5, 0);
+      box-shadow: 0 0 0 0 rgba(194, 247, 58, 0);
     }
   }
 `;

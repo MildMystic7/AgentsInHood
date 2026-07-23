@@ -13,17 +13,17 @@
   --faint: #5f6a62;
 
   /* Robinhood signature green is BOTH the brand accent and the profit color */
-  --green: #00c805;
-  --green-bright: #00e65c;
-  --green-dim: #00a304;
+  --green: #c2f73a;
+  --green-bright: #d6ff63;
+  --green-dim: #a9de1f;
   --red: #ff5000;
   --red-dim: #d94400;
-  --accent: #00c805;
+  --accent: #c2f73a;
   --gold: #f5b301;
 
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  /* Robinhood world = clean grotesque headlines; the serif lives only in the α watermark */
+  /* Robinhood world = clean grotesque headlines; display + body share one grotesque; the A watermark is set in it */
   --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
 
   --radius: 14px;
@@ -45,11 +45,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Background lives on <html> so the α watermark (body::after, z-index:-1)
+/* Background lives on <html> so the A watermark (body::after, z-index:-1)
    can paint above it while staying underneath all content. */
 html {
   background-color: var(--bg);
-  background-image: radial-gradient(circle at 50% -10%, rgba(0, 200, 5, 0.09), transparent 46%),
+  background-image: radial-gradient(circle at 50% -10%, rgba(194, 247, 58, 0.09), transparent 46%),
     linear-gradient(var(--bg-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
   background-size: 100% 100%, 46px 46px, 46px 46px;
@@ -60,18 +60,17 @@ body {
   background: transparent;
 }
 
-/* The big α — the project's mark, watermarked across the whole page */
+/* The big A — the project's mark, watermarked across the whole page */
 body::after {
-  content: "α";
+  content: "A";
   position: fixed;
   z-index: -1;
-  right: -6vw;
+  right: -4vw;
   top: 50%;
-  transform: translateY(-52%);
-  font-family: "Playfair Display", Georgia, serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: min(96vh, 72vw);
+  transform: translateY(-50%);
+  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: min(98vh, 74vw);
   line-height: 1;
   color: var(--green);
   opacity: 0.05;
@@ -85,7 +84,7 @@ a {
 }
 
 ::selection {
-  background: rgba(0, 200, 5, 0.32);
+  background: rgba(194, 247, 58, 0.32);
 }
 
 /* tabular numerics everywhere numbers matter */

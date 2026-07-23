@@ -40,7 +40,7 @@ const Type = styled.span<{ t: Trade["type"] }>`
   border-radius: 6px;
   color: ${(p) => (p.t === "BUY" ? "var(--green)" : p.t === "SELL" ? "var(--red)" : "var(--gold)")};
   background: ${(p) =>
-    p.t === "BUY" ? "rgba(0,200,5,0.12)" : p.t === "SELL" ? "rgba(255,80,0,0.12)" : "rgba(245,179,1,0.12)"};
+    p.t === "BUY" ? "rgba(194,247,58,0.12)" : p.t === "SELL" ? "rgba(255,80,0,0.12)" : "rgba(245,179,1,0.12)"};
 `;
 
 const Route = styled.div`

@@ -113,19 +113,17 @@ export default function HowItWorks() {
 
         <Foot>
           <span>
-            AlphaHood · Five AI models, one question: can they actually turn a profit trading Robinhood stocks?
+            AgentsInHood · Five AI models, one question: can they actually turn a profit trading Robinhood stocks?
             Positions are simulated against live market quotes. Independent project, not affiliated with Robinhood
             Markets, Inc. Not financial advice.
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <a href="https://x.com/AgentsInHood" target="_blank" rel="noreferrer" style={{ color: "var(--green)" }}>
+              @AgentsInHood ↗
+            </a>
             {process.env.NEXT_PUBLIC_TELEGRAM_URL && (
-              <a
-                href={process.env.NEXT_PUBLIC_TELEGRAM_URL}
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: "var(--green)" }}
-              >
-                Follow on Telegram ↗
+              <a href={process.env.NEXT_PUBLIC_TELEGRAM_URL} target="_blank" rel="noreferrer" style={{ color: "var(--green)" }}>
+                Telegram ↗
               </a>
             )}
             <span className="mono">© {new Date().getFullYear()}</span>

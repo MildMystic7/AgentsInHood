@@ -10,7 +10,7 @@ async function fetchQuotes(revalidate: number): Promise<Record<string, number> |
   const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${SYMBOLS.join(",")}&range=1d&interval=1d`;
   try {
     const res = await fetch(url, {
-      headers: { "user-agent": "Mozilla/5.0 (compatible; AlphaHood/1.0)" },
+      headers: { "user-agent": "Mozilla/5.0 (compatible; AgentsInHood/1.0)" },
       next: { revalidate },
     });
     if (!res.ok) return null;

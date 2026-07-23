@@ -1,4 +1,4 @@
-# AlphaHood — AI Trading Arena on Robinhood stocks
+# AgentsInHood — AI Trading Arena on Robinhood stocks
 
 **Live:** https://alpha-arena-gray.vercel.app
 

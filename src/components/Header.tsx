@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import styled from "@emotion/styled";
 import { useAppSelector } from "@/store/hooks";
 import { Container, LiveDot } from "./ui";
+import { LogoMark } from "./Logo";
 import { money } from "@/lib/format";
+
+const X_URL = "https://x.com/AgentsInHood";
 
 const Bar = styled.header`
   position: sticky;
@@ -29,18 +32,6 @@ const Brand = styled.a`
   font-weight: 800;
   letter-spacing: -0.02em;
   font-size: 17px;
-`;
-
-const Logo = styled.span`
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--green), var(--green-bright));
-  color: #032b04;
-  font-family: var(--font-mono);
-  font-weight: 800;
 `;
 
 const Nav = styled.nav`
@@ -109,8 +100,8 @@ const LaunchBadge = styled.a`
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--green);
-  border: 1px solid rgba(0, 200, 5, 0.35);
-  background: rgba(0, 200, 5, 0.08);
+  border: 1px solid rgba(194, 247, 58, 0.35);
+  background: rgba(194, 247, 58, 0.08);
   border-radius: 999px;
   padding: 7px 14px;
   margin-bottom: 22px;
@@ -198,8 +189,8 @@ export default function Header() {
         <Container>
           <BarInner>
             <Brand href="#top">
-              <Logo>α</Logo>
-              Alpha<span style={{ color: "var(--green)" }}>Hood</span>
+              <LogoMark size={28} />
+              Agents<span style={{ color: "var(--green)" }}>InHood</span>
             </Brand>
             <Nav aria-label="Sections">
               {NAV.map(([href, label]) => (
@@ -207,6 +198,9 @@ export default function Header() {
                   {label}
                 </a>
               ))}
+              <a href={X_URL} target="_blank" rel="noreferrer" aria-label="AgentsInHood on X">
+                X ↗
+              </a>
             </Nav>
             <Status>
               <LiveDot active={live} />
