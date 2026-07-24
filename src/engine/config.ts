@@ -40,7 +40,7 @@ export const AGENTS: AgentConfig[] = [
     colorLight: "#f5b30133",
     avatar: "F5",
     tagline:
-      "Anthropic's new Mythos-class flagship — is Fable 5 really the best brain in trading and logic? The arena will answer.",
+      "A strategic benchmark profile built for patient, multi-step reasoning and risk-aware allocation.",
     walletAddress: MAINNET_WALLET_ADDRESS,
     persona:
       "You are a strategic mastermind trader. You reason several moves ahead, size positions by conviction and expected value, exploit both momentum and mean reversion, and manage risk like a professional. Precise, calculated, unshakeable.",
