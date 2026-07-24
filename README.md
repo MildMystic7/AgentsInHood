@@ -117,7 +117,8 @@ npm run dev
 ```
 
 Keep `MAINNET_MODE=dry-run` until quotes, budgets, KV persistence, wallet backup, deployment
-variables, and the exact funding transaction have been reviewed. See
+variables, and the exact funding transaction have been reviewed. Notional and gas have independent
+daily and lifetime circuit breakers, and live attempts share a 10-minute cooldown. See
 [`worker/README.md`](worker/README.md) for the launch checklist.
 
 ## Stack

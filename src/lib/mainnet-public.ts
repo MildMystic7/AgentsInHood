@@ -22,9 +22,16 @@ export interface PublicMainnetStatus {
   walletAddress: string | null;
   walletBalanceEth: string | null;
   dailyBudgetUsd: number;
+  dailyReservedUsd: number;
   dailySpentUsd: number;
   totalBudgetUsd: number;
+  totalReservedUsd: number;
   totalSpentUsd: number;
+  dailyGasBudgetUsd: number;
+  dailyGasReservedUsd: number;
+  totalGasBudgetUsd: number;
+  totalGasReservedUsd: number;
+  minSecondsBetweenTrades: number;
   trades: PublicMainnetTrade[];
   connected: boolean;
 }
@@ -37,9 +44,16 @@ export function fallbackMainnetStatus(): PublicMainnetStatus {
     walletAddress: MAINNET_WALLET_ADDRESS,
     walletBalanceEth: null,
     dailyBudgetUsd: 10,
+    dailyReservedUsd: 0,
     dailySpentUsd: 0,
     totalBudgetUsd: 2,
+    totalReservedUsd: 0,
     totalSpentUsd: 0,
+    dailyGasBudgetUsd: 0.5,
+    dailyGasReservedUsd: 0,
+    totalGasBudgetUsd: 1,
+    totalGasReservedUsd: 0,
+    minSecondsBetweenTrades: 600,
     trades: [],
     connected: false,
   };

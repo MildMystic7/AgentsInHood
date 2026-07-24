@@ -245,12 +245,14 @@ export default function VerifyPage() {
           <Card>
             <div className="label">Daily circuit breaker</div>
             <div className="value">{money(status.dailySpentUsd)} / {money(status.dailyBudgetUsd)}</div>
-            <div className="hint">Maximum 1–5 cents per trade</div>
+            <div className="hint">
+              {money(status.dailyReservedUsd)} reserved · {Math.round(status.minSecondsBetweenTrades / 60)}m live cooldown
+            </div>
           </Card>
           <Card>
             <div className="label">Pilot cap</div>
             <div className="value">{money(status.totalSpentUsd)} / {money(status.totalBudgetUsd)}</div>
-            <div className="hint">Raised only after manual review</div>
+            <div className="hint">{money(status.totalReservedUsd)} reserved · maximum 1–5 cents per trade</div>
           </Card>
         </Grid>
 
@@ -270,6 +272,10 @@ export default function VerifyPage() {
               "not configured"
             )}
             {status.walletBalanceEth !== null ? ` · ${Number(status.walletBalanceEth).toFixed(6)} ETH` : ""}
+          </p>
+          <p>
+            Gas circuit breaker: {money(status.dailyGasReservedUsd)} / {money(status.dailyGasBudgetUsd)} daily ·{" "}
+            {money(status.totalGasReservedUsd)} / {money(status.totalGasBudgetUsd)} pilot
           </p>
         </Panel>
 

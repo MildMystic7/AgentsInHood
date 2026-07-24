@@ -55,6 +55,11 @@ KV_REST_API_TOKEN=
 MAINNET_LIVE_CONFIRM=I_UNDERSTAND_REAL_FUNDS
 ```
 
+The executor has independent notional and gas circuit breakers. Its production defaults reserve at
+most 5 cents of gas per transaction, 50 cents per day, and $1 over the entire pilot. A shared-wallet
+cooldown allows no more than one live attempt every 10 minutes. Conservative reservations are made
+before broadcasting and are not refunded automatically after a failed attempt.
+
 Do not put a private key in Git, chat, screenshots, logs, Vercel public variables, or the website.
 Use a dedicated Railway secret and keep an offline backup.
 

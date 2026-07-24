@@ -42,8 +42,13 @@ export interface MainnetExecutionResult {
 
 interface MainnetState {
   day: string;
-  daySpentCents: number;
-  totalSpentCents: number;
+  dayReservedCents: number;
+  totalReservedCents: number;
+  dayConfirmedCents: number;
+  totalConfirmedCents: number;
+  dayGasReservedMicros: number;
+  totalGasReservedMicros: number;
+  lastLiveAttemptAt?: string;
   trades: MainnetTradeRecord[];
 }
 
@@ -85,8 +90,8 @@ interface SwapResponse {
   };
 }
 
-// v3 contains only quote-backed dry-run plans and real execution records.
-const STATE_KEY = "agentsinhood:mainnet:v3";
+// v4 separates confirmed notional from conservative trade and gas reservations.
+const STATE_KEY = "agentsinhood:mainnet:v4";
 const ASSET_CACHE_MS = 60 * 60 * 1000;
 const ERC20_ABI = [
   "function decimals() view returns (uint8)",
@@ -117,7 +122,16 @@ function utcDay(): string {
 }
 
 function freshState(): MainnetState {
-  return { day: utcDay(), daySpentCents: 0, totalSpentCents: 0, trades: [] };
+  return {
+    day: utcDay(),
+    dayReservedCents: 0,
+    totalReservedCents: 0,
+    dayConfirmedCents: 0,
+    totalConfirmedCents: 0,
+    dayGasReservedMicros: 0,
+    totalGasReservedMicros: 0,
+    trades: [],
+  };
 }
 
 async function loadMainnetState(): Promise<MainnetState> {
@@ -129,7 +143,9 @@ async function loadMainnetState(): Promise<MainnetState> {
         if (parsed && Array.isArray(parsed.trades)) {
           if (parsed.day !== utcDay()) {
             parsed.day = utcDay();
-            parsed.daySpentCents = 0;
+            parsed.dayReservedCents = 0;
+            parsed.dayConfirmedCents = 0;
+            parsed.dayGasReservedMicros = 0;
           }
           memoryState = parsed;
           return parsed;
@@ -142,7 +158,9 @@ async function loadMainnetState(): Promise<MainnetState> {
   if (!memoryState) memoryState = freshState();
   if (memoryState.day !== utcDay()) {
     memoryState.day = utcDay();
-    memoryState.daySpentCents = 0;
+    memoryState.dayReservedCents = 0;
+    memoryState.dayConfirmedCents = 0;
+    memoryState.dayGasReservedMicros = 0;
   }
   return memoryState;
 }
@@ -181,6 +199,10 @@ export function assertMainnetConfiguration(): void {
   const tradeMax = envInt("MAINNET_MAX_TRADE_USD_CENTS", 5);
   const dailyMax = envInt("MAINNET_DAILY_BUDGET_USD_CENTS", 1000);
   const totalMax = envInt("MAINNET_TOTAL_BUDGET_USD_CENTS", 200);
+  const gasPerTxMax = envInt("MAINNET_MAX_GAS_USD_CENTS", 5);
+  const dailyGasMax = envInt("MAINNET_DAILY_GAS_BUDGET_USD_CENTS", 50);
+  const totalGasMax = envInt("MAINNET_TOTAL_GAS_BUDGET_USD_CENTS", 100);
+  const cooldownSeconds = envInt("MAINNET_MIN_SECONDS_BETWEEN_TRADES", 600);
 
   if (tradeMax < 1 || tradeMax > 25) {
     throw new Error("MAINNET_MAX_TRADE_USD_CENTS must be between 1 and 25");
@@ -188,8 +210,20 @@ export function assertMainnetConfiguration(): void {
   if (dailyMax < tradeMax || dailyMax > 1000) {
     throw new Error("MAINNET_DAILY_BUDGET_USD_CENTS must be between the trade maximum and 1000");
   }
-  if (totalMax < tradeMax) {
-    throw new Error("MAINNET_TOTAL_BUDGET_USD_CENTS must cover at least one trade");
+  if (totalMax < tradeMax || totalMax > 1000) {
+    throw new Error("MAINNET_TOTAL_BUDGET_USD_CENTS must cover one trade and be at most 1000");
+  }
+  if (gasPerTxMax < 1 || gasPerTxMax > 25) {
+    throw new Error("MAINNET_MAX_GAS_USD_CENTS must be between 1 and 25");
+  }
+  if (dailyGasMax < gasPerTxMax || dailyGasMax > 500) {
+    throw new Error("MAINNET_DAILY_GAS_BUDGET_USD_CENTS must cover one transaction and be at most 500");
+  }
+  if (totalGasMax < gasPerTxMax || totalGasMax > 500) {
+    throw new Error("MAINNET_TOTAL_GAS_BUDGET_USD_CENTS must cover one transaction and be at most 500");
+  }
+  if (cooldownSeconds < 60 || cooldownSeconds > 3600) {
+    throw new Error("MAINNET_MIN_SECONDS_BETWEEN_TRADES must be between 60 and 3600");
   }
   if (mode === "live") {
     if (process.env.MAINNET_LIVE_CONFIRM !== "I_UNDERSTAND_REAL_FUNDS") {
@@ -333,7 +367,7 @@ async function assertTransactionBudget(
     maxPriorityFeePerGas?: bigint;
   },
   ethPriceUsd: number,
-): Promise<void> {
+): Promise<number> {
   if (!Number.isFinite(ethPriceUsd) || ethPriceUsd <= 0) {
     throw new Error("ETH/USD price is unavailable for the gas check");
   }
@@ -346,6 +380,7 @@ async function assertTransactionBudget(
 
   const gasWei = estimatedGas * feePerGas;
   const gasUsd = Number(formatEther(gasWei)) * ethPriceUsd;
+  const gasMicros = Math.max(1, Math.ceil(gasUsd * 1_000_000));
   const maxGasUsd = envInt("MAINNET_MAX_GAS_USD_CENTS", 5) / 100;
   if (!Number.isFinite(gasUsd) || gasUsd > maxGasUsd) {
     throw new Error(`Estimated transaction gas $${gasUsd.toFixed(4)} exceeds $${maxGasUsd.toFixed(2)}`);
@@ -356,6 +391,7 @@ async function assertTransactionBudget(
   if (balance - (request.value || 0n) - gasWei < reserve) {
     throw new Error("Transaction would breach the protected ETH gas reserve");
   }
+  return gasMicros;
 }
 
 async function desiredInputAmount(
@@ -389,6 +425,7 @@ async function maybeApprove(
   tokenOut: string,
   amount: string,
   ethPriceUsd: number,
+  reserveGas: (gasMicros: number) => Promise<void>,
 ): Promise<string | undefined> {
   const response = await uniswapRequest<{
     cancel?: SwapResponse["swap"] | null;
@@ -423,7 +460,13 @@ async function maybeApprove(
       ? BigInt(response.approval.maxPriorityFeePerGas)
       : undefined,
   };
-  await assertTransactionBudget(provider, wallet.address, approvalRequest, ethPriceUsd);
+  const gasMicros = await assertTransactionBudget(
+    provider,
+    wallet.address,
+    approvalRequest,
+    ethPriceUsd,
+  );
+  await reserveGas(gasMicros);
   const tx = await wallet.sendTransaction(approvalRequest);
   const receipt = await tx.wait(1);
   if (!receipt || receipt.status !== 1) throw new Error("Token approval transaction failed");
@@ -497,7 +540,10 @@ async function executeLiveTrade(args: {
   usdCents: number;
   stockPriceUsd: number;
   ethPriceUsd: number;
-}): Promise<{ txHash: string; approvalTxHash?: string }> {
+}, reserveGas: (gasMicros: number) => Promise<void>): Promise<{
+  txHash: string;
+  approvalTxHash?: string;
+}> {
   const baseWallet = configuredWallet();
   if (!baseWallet) throw new Error("MAINNET_PRIVATE_KEY is not configured");
   const prepared = await prepareQuote(args, baseWallet.address);
@@ -516,7 +562,14 @@ async function executeLiveTrade(args: {
     throw new Error(`Gas reserve protected; wallet has ${formatEther(balanceBefore)} ETH`);
   }
 
-  const approvalTxHash = await maybeApprove(wallet, tokenIn, tokenOut, amount, args.ethPriceUsd);
+  const approvalTxHash = await maybeApprove(
+    wallet,
+    tokenIn,
+    tokenOut,
+    amount,
+    args.ethPriceUsd,
+    reserveGas,
+  );
 
   let signature: string | undefined;
   if (quoteResponse.permitData) {
@@ -542,7 +595,13 @@ async function executeLiveTrade(args: {
   if ((request.value || 0n) > 0n) {
     throw new Error("USDG/stock-token swap unexpectedly requests native ETH value");
   }
-  await assertTransactionBudget(provider, wallet.address, request, args.ethPriceUsd);
+  const gasMicros = await assertTransactionBudget(
+    provider,
+    wallet.address,
+    request,
+    args.ethPriceUsd,
+  );
+  await reserveGas(gasMicros);
   const tx = await wallet.sendTransaction(request);
   const receipt = await tx.wait(1);
   if (!receipt || receipt.status !== 1) throw new Error("Swap transaction failed");
@@ -579,10 +638,17 @@ export async function executeMainnetTrade(args: {
     const maxTrade = envInt("MAINNET_MAX_TRADE_USD_CENTS", 5);
     const dailyBudget = envInt("MAINNET_DAILY_BUDGET_USD_CENTS", 1000);
     const totalBudget = envInt("MAINNET_TOTAL_BUDGET_USD_CENTS", 200);
+    const cooldownMs = envInt("MAINNET_MIN_SECONDS_BETWEEN_TRADES", 600) * 1000;
     let rejection: string | undefined;
     if (usdCents < 1 || usdCents > maxTrade) rejection = `trade must be between 1 and ${maxTrade} cents`;
-    else if (state.daySpentCents + usdCents > dailyBudget) rejection = "daily circuit breaker reached";
-    else if (state.totalSpentCents + usdCents > totalBudget) rejection = "pilot lifetime budget reached";
+    else if (state.dayReservedCents + usdCents > dailyBudget) rejection = "daily circuit breaker reached";
+    else if (state.totalReservedCents + usdCents > totalBudget) rejection = "pilot lifetime budget reached";
+    else if (mode === "live" && state.lastLiveAttemptAt) {
+      const elapsed = Date.now() - Date.parse(state.lastLiveAttemptAt);
+      if (Number.isFinite(elapsed) && elapsed < cooldownMs) {
+        rejection = "shared-wallet live cooldown is active";
+      }
+    }
 
     const record: MainnetTradeRecord = {
       id: args.id,
@@ -621,9 +687,26 @@ export async function executeMainnetTrade(args: {
 
     // Budget is reserved only when the executor is actually allowed to submit
     // a transaction. Dry-run plans never count as real spend.
-    state.daySpentCents += usdCents;
-    state.totalSpentCents += usdCents;
+    state.dayReservedCents += usdCents;
+    state.totalReservedCents += usdCents;
+    state.lastLiveAttemptAt = new Date().toISOString();
     await saveMainnetState(state);
+
+    const reserveGas = async (gasMicros: number): Promise<void> => {
+      const dailyGasLimitMicros =
+        envInt("MAINNET_DAILY_GAS_BUDGET_USD_CENTS", 50) * 10_000;
+      const totalGasLimitMicros =
+        envInt("MAINNET_TOTAL_GAS_BUDGET_USD_CENTS", 100) * 10_000;
+      if (state.dayGasReservedMicros + gasMicros > dailyGasLimitMicros) {
+        throw new Error("daily gas circuit breaker reached");
+      }
+      if (state.totalGasReservedMicros + gasMicros > totalGasLimitMicros) {
+        throw new Error("pilot lifetime gas budget reached");
+      }
+      state.dayGasReservedMicros += gasMicros;
+      state.totalGasReservedMicros += gasMicros;
+      await saveMainnetState(state);
+    };
 
     try {
       const result = await executeLiveTrade({
@@ -632,11 +715,13 @@ export async function executeMainnetTrade(args: {
         usdCents,
         stockPriceUsd: args.stockPriceUsd,
         ethPriceUsd: args.ethPriceUsd,
-      });
+      }, reserveGas);
       record.status = "confirmed";
       record.txHash = result.txHash;
       record.approvalTxHash = result.approvalTxHash;
       record.reason = args.reasoning.slice(0, 280);
+      state.dayConfirmedCents += usdCents;
+      state.totalConfirmedCents += usdCents;
       await saveMainnetState(state);
       return { mode, status: "confirmed", ...result };
     } catch (error) {
@@ -655,9 +740,16 @@ export async function getPublicMainnetStatus(): Promise<{
   walletAddress: string | null;
   walletBalanceEth: string | null;
   dailyBudgetUsd: number;
+  dailyReservedUsd: number;
   dailySpentUsd: number;
   totalBudgetUsd: number;
+  totalReservedUsd: number;
   totalSpentUsd: number;
+  dailyGasBudgetUsd: number;
+  dailyGasReservedUsd: number;
+  totalGasBudgetUsd: number;
+  totalGasReservedUsd: number;
+  minSecondsBetweenTrades: number;
   trades: MainnetTradeRecord[];
 }> {
   const state = await loadMainnetState();
@@ -681,9 +773,16 @@ export async function getPublicMainnetStatus(): Promise<{
     walletAddress,
     walletBalanceEth,
     dailyBudgetUsd: envInt("MAINNET_DAILY_BUDGET_USD_CENTS", 1000) / 100,
-    dailySpentUsd: state.daySpentCents / 100,
+    dailyReservedUsd: state.dayReservedCents / 100,
+    dailySpentUsd: state.dayConfirmedCents / 100,
     totalBudgetUsd: envInt("MAINNET_TOTAL_BUDGET_USD_CENTS", 200) / 100,
-    totalSpentUsd: state.totalSpentCents / 100,
+    totalReservedUsd: state.totalReservedCents / 100,
+    totalSpentUsd: state.totalConfirmedCents / 100,
+    dailyGasBudgetUsd: envInt("MAINNET_DAILY_GAS_BUDGET_USD_CENTS", 50) / 100,
+    dailyGasReservedUsd: state.dayGasReservedMicros / 1_000_000,
+    totalGasBudgetUsd: envInt("MAINNET_TOTAL_GAS_BUDGET_USD_CENTS", 100) / 100,
+    totalGasReservedUsd: state.totalGasReservedMicros / 1_000_000,
+    minSecondsBetweenTrades: envInt("MAINNET_MIN_SECONDS_BETWEEN_TRADES", 600),
     trades: [...state.trades].reverse().slice(0, 50),
   };
 }
