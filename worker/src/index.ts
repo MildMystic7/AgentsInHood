@@ -17,8 +17,10 @@ import { escapeHtml, sendTelegramMessage, telegramConfigured } from "./telegram"
 // testnet — verifiable, immutable, zero real financial risk.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MIN_THINK_MS = 2 * 60 * 1000;
-const MAX_THINK_MS = 10 * 60 * 1000;
+// Each agent acts on its own random 30s–3min interval — independent per agent,
+// so the combined feed stays lively but every bet still gets its own beat.
+const MIN_THINK_MS = 30 * 1000;
+const MAX_THINK_MS = 3 * 60 * 1000;
 const MIN_TRADE_USD = 0.01;
 const MAX_TRADE_USD = 0.05;
 
@@ -99,7 +101,7 @@ function startHealthServer(): void {
 }
 
 async function main(): Promise<void> {
-  console.log(`AlphaHood worker starting — ${AGENTS.length} agents, each thinking every 2-10 minutes.`);
+  console.log(`AlphaHood worker starting — ${AGENTS.length} agents, each trading on a random 30s-3min interval.`);
   console.log("Telegram:", telegramConfigured() ? "configured" : "not configured (set TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID)");
   console.log("On-chain ledger:", ledgerConfigured() ? "configured" : "not configured (set WORKER_PRIVATE_KEY / LEDGER_CONTRACT_ADDRESS)");
 

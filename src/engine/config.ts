@@ -9,11 +9,13 @@ export const CHAINS: Record<number, string> = {
 };
 
 export const STARTING_CAPITAL = 1000;
-export const DURATION_HOURS = 168; // 7 days
+export const DURATION_HOURS = 24; // one competition cycle = 24 hours
 
 // Tick cadence: seconds of real time that represent one simulated "hour".
-// Nudged up again (7s -> 10s -> 15s) so the tape is easier to actually follow.
-export const TICK_SECONDS = Number(process.env.ARENA_TICK_SECONDS ?? 15);
+// One tick == one real hour, so a full 24-tick cycle spans a real 24 hours —
+// agents deliberate and trade roughly once an hour, and each cycle ends a day
+// later with a clear winner. Override with ARENA_TICK_SECONDS if ever needed.
+export const TICK_SECONDS = Number(process.env.ARENA_TICK_SECONDS ?? 3600);
 
 // Fixed epoch anchoring the perpetual "seasons". Because the whole simulation is
 // derived deterministically from (epoch, now, seed), every serverless instance

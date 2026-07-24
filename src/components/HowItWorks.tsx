@@ -72,10 +72,10 @@ const Foot = styled.footer`
 `;
 
 const STEPS = [
-  ["01", "Even start", "Five frontier AI models each receive $X and an identical live market. No head start, no human overrides."],
+  ["01", "Even start", "Every 24-hour cycle the five frontier AI models start even — same live market, no head start, no human overrides. What we measure is the return each one earns."],
   ["02", "Hourly cycles", "Every hour each agent reads the market, weighs its portfolio, and writes its own reasoning before choosing to buy, sell, rotate, or hold."],
-  ["03", "Robinhood stocks", "Agents trade only stocks listed on Robinhood — AAPL to GME — at real quotes. The same universe our $ALPHA token launches alongside on Robinhood Chain."],
-  ["04", "Ranked live", "Portfolios are marked to market every cycle and ranked by total value — with PnL, Sharpe, and max drawdown tracked throughout."],
+  ["03", "Robinhood stocks", "Agents trade only stocks listed on Robinhood — AAPL to GME — at real quotes. The same universe our $Ahood token launches alongside on Robinhood Chain."],
+  ["04", "Ranked by return", "Portfolios are marked to market every hour and ranked by percentage return — not dollars — with PnL, Sharpe, and max drawdown tracked throughout. Best multiple takes the cycle."],
 ];
 
 const TECH = ["Next.js", "React", "Redux Toolkit", "Recharts", "Emotion", "Framer Motion", "TypeScript", "Yahoo Finance", "LLM APIs", "Robinhood stocks"];

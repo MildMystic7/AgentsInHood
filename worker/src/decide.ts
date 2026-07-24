@@ -1,10 +1,5 @@
-import { STARTING_CAPITAL, TOKENS, type AgentConfig } from "./config";
+import { TOKENS, type AgentConfig } from "./config";
 import type { QuoteSnapshot } from "./quotes";
-
-// Persona gating thresholds below were tuned against a $1,000 reference
-// portfolio; this scales them to whatever STARTING_CAPITAL actually is (e.g.
-// $8) so "cash > 40" behaves as "cash > 4% of capital" at any size.
-const SCALE = STARTING_CAPITAL / 1000;
 
 export interface Holding {
   tokens: number;
@@ -57,65 +52,112 @@ export function decide(agent: AgentConfig, state: PortfolioState, snapshot: Quot
   const cash = state.cash;
   const value = totalValue(state, prices);
 
+  const r2 = rand(); // independent draw so the *wording* varies even when the move repeats
   const mom = (s: string) => momentum[s] ?? 0;
   const fmt = (s: string) => `${mom(s) >= 0 ? "+" : ""}${mom(s).toFixed(2)}%`;
+  // Live quotes are often nearly flat (momentum ≈ 0), so gates keyed purely on
+  // big momentum almost never fire. Every persona below therefore has a
+  // characteristic *fallback* trade — the point of this worker is to compare the
+  // agents head-to-head on-chain, which only works if all five actually trade.
+  const buyValue = round(Math.min(cash * (0.25 + r * 0.35), cash));
 
   switch (agent.id) {
     case "fable": {
-      const bigWinner = held.find((s) => mom(s) > 2.5 && state.holdings[s].tokens * prices[s] > value * 0.15);
-      if (bigWinner && r > 0.45) {
-        return { action: "SELL", symbol: bigWinner, usdAmount: round(state.holdings[bigWinner].tokens * prices[bigWinner] * 0.4), reasoning: `${bigWinner} extended ${fmt(bigWinner)} above my fair-value band; banking 40% of the position, letting the rest ride. Expected value says take the certain gain.` };
+      // Strategic mastermind — EV blend of momentum and mean reversion, moderate cadence.
+      const bigWinner = held.find((s) => mom(s) > 2 && state.holdings[s].tokens * prices[s] > value * 0.15);
+      if (bigWinner && r > 0.55) {
+        return { action: "SELL", symbol: bigWinner, usdAmount: round(state.holdings[bigWinner].tokens * prices[bigWinner] * 0.4), reasoning: pick([
+          `${bigWinner} extended ${fmt(bigWinner)} above my fair-value band; banking 40% and letting the rest ride. Take the certain gain.`,
+          `Trimming ${bigWinner} (${fmt(bigWinner)}) — the expected value of locking in beats the marginal upside from here.`,
+        ], r2) };
       }
-      if (cash > 40 * SCALE && coldest && mom(coldest) < -1.8 && r > 0.55) {
-        return { action: "BUY", symbol: coldest, usdAmount: round(Math.min(cash * 0.3, cash)), reasoning: `${coldest} at ${fmt(coldest)} is a statistical overreaction — mean reversion favours entry here. Sizing at 30% of cash, defined downside.` };
+      if (coldest && mom(coldest) < -0.4 && r > 0.4) {
+        return { action: "BUY", symbol: coldest, usdAmount: buyValue, reasoning: pick([
+          `${coldest} at ${fmt(coldest)} is a statistical overreaction — mean reversion favours entry, downside is defined.`,
+          `Fading the drop in ${coldest} (${fmt(coldest)}); the selloff is overdone relative to fair value. Sizing with conviction.`,
+        ], r2) };
       }
-      if (cash > 30 * SCALE && hottest && mom(hottest) > 0.8 && r > 0.3) {
-        return { action: "BUY", symbol: hottest, usdAmount: round(Math.min(cash * (0.25 + r * 0.2), cash)), reasoning: `Momentum in ${hottest} (${fmt(hottest)}) is confirmed, not noise. Joining with conviction sizing — checks out a few moves ahead.` };
+      if (hottest && r > 0.35) {
+        return { action: "BUY", symbol: hottest, usdAmount: buyValue, reasoning: pick([
+          `Momentum in ${hottest} (${fmt(hottest)}) checks out a few moves ahead — joining the trend with measured size.`,
+          `${hottest} is the highest-EV setup on the board right now (${fmt(hottest)}); deploying deliberately.`,
+        ], r2) };
       }
-      const laggard = held.find((s) => mom(s) < -1.2 && state.holdings[s].tokens * prices[s] > 15 * SCALE);
-      if (laggard && r > 0.6) {
-        return { action: "SELL", symbol: laggard, usdAmount: round(state.holdings[laggard].tokens * prices[laggard]), reasoning: `${laggard} thesis invalidated (${fmt(laggard)}); recycling capital to higher expected value.` };
+      if (held.length && r > 0.5) {
+        const lag = pick(held, r2);
+        return { action: "SELL", symbol: lag, usdAmount: round(state.holdings[lag].tokens * prices[lag]), reasoning: `Recycling ${lag} (${fmt(lag)}) into higher expected value — a superior mind changes course on the evidence.` };
       }
-      return { action: "HOLD", reasoning: "No edge above my threshold right now. The best trade is often the one you don't make." };
+      return { action: "BUY", symbol: coldest ?? hottest, usdAmount: buyValue, reasoning: pick([
+        `Nothing screaming right now, so I take the highest-EV name on offer — ${coldest ?? hottest} (${fmt(coldest ?? hottest)}) — and size it modestly.`,
+        `Deploying a measured tranche into ${coldest ?? hottest} (${fmt(coldest ?? hottest)}); patience is a position, but so is a disciplined bid.`,
+      ], r2) };
     }
     case "gpt": {
-      if (cash > 30 * SCALE && hottest && mom(hottest) > 0.3) {
-        return { action: "BUY", symbol: hottest, usdAmount: round(Math.min(cash * (0.3 + r * 0.3), cash)), reasoning: `${hottest} is leading the tape at ${fmt(hottest)}; deploying into strength.` };
-      }
-      const loser = held.find((s) => mom(s) < -0.5);
-      if (loser) return { action: "SELL", symbol: loser, usdAmount: round(state.holdings[loser].tokens * prices[loser]), reasoning: `${loser} rolled over (${fmt(loser)}); cutting fast to protect capital.` };
-      return { action: "HOLD", reasoning: "No clean momentum setup right now — staying patient." };
+      // Decisive momentum executor — the most active besides MiniMax.
+      const loser = held.find((s) => mom(s) < -0.4);
+      if (loser && r < 0.35) return { action: "SELL", symbol: loser, usdAmount: round(state.holdings[loser].tokens * prices[loser]), reasoning: pick([
+        `${loser} rolled over (${fmt(loser)}); cutting fast to protect capital and free up powder.`,
+        `Booking out of ${loser} at ${fmt(loser)} — losers get cut, no debate.`,
+      ], r2) };
+      if (hottest) return { action: "BUY", symbol: hottest, usdAmount: buyValue, reasoning: pick([
+        `${hottest} is leading the tape at ${fmt(hottest)}; deploying into strength — momentum begets momentum.`,
+        `Chasing ${hottest} (${fmt(hottest)}) — strongest name on the board, and I ride winners.`,
+        `Loading ${hottest} at ${fmt(hottest)}; the trend is my friend until it isn't.`,
+      ], r2) };
+      return { action: "BUY", symbol: hottest, usdAmount: buyValue, reasoning: `Tape's quiet, but I don't sit on my hands — taking the strongest name, ${hottest} (${fmt(hottest)}), and pressing.` };
     }
     case "claude": {
-      if (cash > 50 * SCALE && coldest && mom(coldest) < -1 && r > 0.5) {
-        return { action: "BUY", symbol: coldest, usdAmount: round(Math.min(cash * 0.2, cash)), reasoning: `${coldest} is oversold at ${fmt(coldest)}; scaling in a small tranche, keeping the rest in reserve.` };
+      // Patient value — trades the least, keeps dry powder, but still acts on a dip.
+      const winner = held.find((s) => mom(s) > 1.5);
+      if (winner && r > 0.6) return { action: "SELL", symbol: winner, usdAmount: round(state.holdings[winner].tokens * prices[winner] * 0.5), reasoning: pick([
+        `Taking partial profit on ${winner} (${fmt(winner)}) — banking the gain, staying disciplined.`,
+        `Trimming ${winner} (${fmt(winner)}) back to a core position; no need to be greedy.`,
+      ], r2) };
+      if (coldest && r > 0.45) {
+        return { action: "BUY", symbol: coldest, usdAmount: round(Math.min(cash * 0.18, cash)), reasoning: pick([
+          `${coldest} at ${fmt(coldest)} is where patience pays — scaling in a small tranche, keeping the rest in reserve.`,
+          `Building ${coldest} (${fmt(coldest)}) slowly; the thesis is strong and the price is finally reasonable.`,
+        ], r2) };
       }
-      const winner = held.find((s) => mom(s) > 2);
-      if (winner && r > 0.6) return { action: "SELL", symbol: winner, usdAmount: round(state.holdings[winner].tokens * prices[winner] * 0.5), reasoning: `Taking partial profit on ${winner} (${fmt(winner)}) — banking the gain, staying disciplined.` };
-      return { action: "HOLD", reasoning: "Thesis unchanged, nothing mispriced enough to act on." };
+      return { action: "BUY", symbol: coldest ?? hottest, usdAmount: round(Math.min(cash * 0.15, cash)), reasoning: pick([
+        `Adding a careful starter in ${coldest ?? hottest} (${fmt(coldest ?? hottest)}) — small size, strong thesis, room to average down.`,
+        `Putting a little dry powder to work in ${coldest ?? hottest} (${fmt(coldest ?? hottest)}); conviction builds one tranche at a time.`,
+      ], r2) };
     }
     case "gemini": {
-      const underexposed = symbols.find((s) => !held.includes(s) && mom(s) > 0);
-      if (cash > 40 * SCALE && underexposed && r > 0.35) {
-        return { action: "BUY", symbol: underexposed, usdAmount: round(Math.min(cash * 0.25, cash)), reasoning: `Adding ${underexposed} (${fmt(underexposed)}) to diversify and improve the risk-adjusted profile.` };
-      }
+      // Balanced quant — diversify into unheld names, trim concentration.
       const overweight = [...held].sort((a, b) => state.holdings[b].tokens * prices[b] - state.holdings[a].tokens * prices[a])[0];
-      if (overweight && state.holdings[overweight].tokens * prices[overweight] > value * 0.4) {
-        return { action: "SELL", symbol: overweight, usdAmount: round(state.holdings[overweight].tokens * prices[overweight] * 0.3), reasoning: `${overweight} is oversized in the book; trimming to manage concentration.` };
+      if (overweight && state.holdings[overweight].tokens * prices[overweight] > value * 0.4 && r < 0.4) {
+        return { action: "SELL", symbol: overweight, usdAmount: round(state.holdings[overweight].tokens * prices[overweight] * 0.3), reasoning: `${overweight} is oversized in the book; trimming to manage concentration and cap drawdown.` };
       }
-      return { action: "HOLD", reasoning: "Book is balanced — no rebalance needed this cycle." };
+      const unheld = symbols.filter((s) => !held.includes(s));
+      const target = unheld.length ? pick(unheld, r) : hottest;
+      if (target) return { action: "BUY", symbol: target, usdAmount: round(Math.min(cash * 0.22, cash)), reasoning: pick([
+        `Adding ${target} (${fmt(target)}) to diversify the book and improve the risk-adjusted profile.`,
+        `Rotating a tranche into ${target} (${fmt(target)}) — spreading correlation, keeping the sleeve balanced.`,
+        `Topping up ${target} (${fmt(target)}) to rebalance toward my target weights.`,
+      ], r2) };
+      return { action: "BUY", symbol: hottest, usdAmount: round(Math.min(cash * 0.2, cash)), reasoning: `Book's balanced, so I lean into the sleeve with momentum — ${hottest} (${fmt(hottest)}) — keeping weights in check.` };
     }
     case "minimax":
     default: {
-      if (cash > 20 * SCALE && r > 0.25) {
-        const target = highBeta.length && r > 0.4 ? pick(highBeta, r) : hottest;
-        if (target) return { action: "BUY", symbol: target, usdAmount: round(Math.min(cash * (0.4 + r * 0.4), cash)), reasoning: `Piling into ${target} — high-beta names are where the moves are, want in before the tape confirms.` };
+      // Hyperactive scalper — highest cadence, loves high-beta and fast flips.
+      if (held.length && r < 0.35) {
+        const flip = pick(held, r2);
+        return { action: "SELL", symbol: flip, usdAmount: round(state.holdings[flip].tokens * prices[flip]), reasoning: pick([
+          `Flipping ${flip} (${fmt(flip)}) to rotate into the next mover — no diamond hands here.`,
+          `Dumping ${flip} at ${fmt(flip)}; it's done moving and I need the powder for the next spike.`,
+          `Cutting ${flip} (${fmt(flip)}) loose — I trade the tape, not the ticker.`,
+        ], r2) };
       }
-      if (held.length && r < 0.4) {
-        const flip = pick(held, r);
-        return { action: "SELL", symbol: flip, usdAmount: round(state.holdings[flip].tokens * prices[flip]), reasoning: `Flipping ${flip} to rotate into the next mover — no diamond hands here.` };
-      }
-      return { action: "HOLD", reasoning: "Reloading — waiting for the next spike to pounce." };
+      const target = highBeta.length && r > 0.4 ? pick(highBeta, r) : hottest;
+      if (target) return { action: "BUY", symbol: target, usdAmount: round(Math.min(cash * (0.4 + r * 0.4), cash)), reasoning: pick([
+        `Piling into ${target} (${fmt(target)}) — high-beta is where the moves are, want in before the tape confirms.`,
+        `${target} (${fmt(target)}) is my kind of chaos — going in heavy before the crowd wakes up.`,
+        `Front-running the momentum in ${target} (${fmt(target)}); fortune favours the fast.`,
+        `Ripping the trigger on ${target} at ${fmt(target)} — the volatility is the opportunity.`,
+      ], r2) };
+      return { action: "BUY", symbol: hottest, usdAmount: round(Math.min(cash * 0.5, cash)), reasoning: `Never flat for long — slamming into ${hottest} (${fmt(hottest)}), the next spike waits for no one.` };
     }
   }
 }

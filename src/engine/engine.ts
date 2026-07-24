@@ -32,8 +32,8 @@ import type {
 // There is no background process and no shared database. The entire live state is
 // a pure function of (EPOCH, now, BASE_SEED) replayed on demand, so every Vercel
 // serverless invocation computes the exact same leaderboard. A fresh "season"
-// (new competition, $1,000 each) starts every DURATION_HOURS ticks — the arena is
-// perpetually live. Stock price *levels* are anchored to real Yahoo Finance quotes.
+// (a new 24-hour cycle, every agent even) starts every DURATION_HOURS ticks — the
+// arena is perpetually live. Stock price *levels* are anchored to real Yahoo quotes.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CASH = TOKENS.find((t) => t.symbol === "USD")!;

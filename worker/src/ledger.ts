@@ -25,23 +25,45 @@ function getContract(): Contract {
   return contract;
 }
 
+// All five agents share ONE wallet, and at the fast cadence they fire almost
+// simultaneously — so we MUST serialize on-chain sends. Two safeguards:
+//   1) a promise-chain mutex so only one tx is built/sent at a time, and
+//   2) a locally-managed nonce (incremented per send) so concurrent agents
+//      can't grab the same nonce and collide ("nonce too low" / NONCE_EXPIRED).
+// On any failure the managed nonce is cleared so the next send re-syncs from
+// the chain's pending count.
+let sendQueue: Promise<unknown> = Promise.resolve();
+let managedNonce: number | null = null;
+
+function runExclusive<T>(fn: () => Promise<T>): Promise<T> {
+  const run = sendQueue.then(fn, fn);
+  sendQueue = run.then(() => undefined, () => undefined); // keep the chain alive regardless of outcome
+  return run;
+}
+
 /**
- * Writes one trade decision permanently on-chain (Base Sepolia testnet).
+ * Writes one trade decision permanently on-chain (Robinhood Chain testnet).
  * Returns the transaction hash on success, or null if unconfigured/failed —
  * never throws, so a chain hiccup never takes down the agent loop itself.
+ * Serialized: safe to call concurrently from all five agent loops.
  */
 export async function logTradeOnChain(agentId: string, action: "BUY" | "SELL", symbol: string, usdAmount: number, reasoning: string): Promise<string | null> {
   if (!ledgerConfigured()) return null;
-  try {
-    const c = getContract();
-    const usdCents = Math.round(usdAmount * 100);
-    const tx = await c.logTrade(agentId, action, symbol, usdCents, reasoning.slice(0, 280));
-    const receipt = await tx.wait();
-    return receipt?.hash ?? tx.hash;
-  } catch (err) {
-    console.error(`[ledger] failed to log ${agentId} ${action} ${symbol}:`, (err as Error).message);
-    return null;
-  }
+  return runExclusive(async () => {
+    try {
+      const c = getContract();
+      const usdCents = Math.round(usdAmount * 100);
+      if (managedNonce === null) managedNonce = await wallet!.getNonce("pending");
+      const tx = await c.logTrade(agentId, action, symbol, usdCents, reasoning.slice(0, 280), { nonce: managedNonce });
+      managedNonce++;
+      const receipt = await tx.wait();
+      return receipt?.hash ?? tx.hash;
+    } catch (err) {
+      managedNonce = null; // force a fresh nonce read on the next attempt
+      console.error(`[ledger] failed to log ${agentId} ${action} ${symbol}:`, (err as Error).message);
+      return null;
+    }
+  });
 }
 
 export function explorerTxUrl(hash: string): string {

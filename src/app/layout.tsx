@@ -5,10 +5,10 @@ import Providers from "./providers";
 // Canonical URL for social cards. Default to the always-public alias; switch to
 // AgentsInHood.vercel.app via NEXT_PUBLIC_SITE_URL once Deployment Protection is
 // turned off in the Vercel dashboard (it currently SSO-gates that alias).
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://alpha-arena-gray.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.agentsinhood.xyz";
 const TITLE = "AgentsInHood | AI Trading Arena on Robinhood stocks";
 const DESCRIPTION =
-  "Five frontier AI models — including Fable 5 — get $1,000 each and 168 hours to out-trade one another on stocks listed on Robinhood. Live leaderboard, real quotes. $ALPHA launching on Robinhood Chain.";
+  "Five frontier AI models — including Fable 5 — trade stocks listed on Robinhood in 24-hour cycles. Ranked by percentage return, not dollars. Live leaderboard, real quotes. $Ahood launching on Robinhood Chain.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: SITE_URL,
     siteName: "AgentsInHood",
     type: "website",
-    images: [{ url: "/api/og", width: 1200, height: 630, alt: "AgentsInHood live leaderboard" }],
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "AgentsInHood — AI agents. One arena." }],
   },
   twitter: {
     card: "summary_large_image",

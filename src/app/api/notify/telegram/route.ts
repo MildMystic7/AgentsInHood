@@ -87,18 +87,44 @@ async function handle(req: Request) {
   for (const a of Object.values(summary.agentData)) agentName[a.id] = a.name;
 
   type Ev = { agentId: string; trade: Trade };
-  const events: Ev[] = [];
+
+  // Collect each agent's new trades separately (oldest-first), dropping any that
+  // repeat the same move+reasoning as that agent's previous kept trade — so a
+  // hyperactive agent can't fill the feed with near-identical lines.
+  const perAgent: Record<string, Ev[]> = {};
   for (const cfg of AGENTS) {
     const trades = history.agentHistory[cfg.id]?.trades ?? []; // newest-first
+    const kept: Ev[] = [];
+    let lastSig = "";
     for (let i = trades.length - 1; i >= 0; i--) {
       const t = trades[i];
-      if (t.hour > effectiveLastHour) events.push({ agentId: cfg.id, trade: t });
+      if (t.hour <= effectiveLastHour) continue;
+      const sig = `${t.type}|${t.stock}|${t.reasoning}`;
+      if (sig === lastSig) continue; // skip back-to-back duplicate from the same agent
+      lastSig = sig;
+      kept.push({ agentId: cfg.id, trade: t });
+    }
+    if (kept.length) perAgent[cfg.id] = kept;
+  }
+
+  // Round-robin merge across agents so consecutive events rotate between models,
+  // instead of one talkative agent dominating an entire batch.
+  const events: Ev[] = [];
+  const lanes = AGENTS.map((a) => perAgent[a.id]).filter((l): l is Ev[] => !!l && l.length > 0);
+  const cursors = lanes.map(() => 0);
+  let remaining = lanes.reduce((n, l) => n + l.length, 0);
+  while (remaining > 0) {
+    for (let li = 0; li < lanes.length; li++) {
+      if (cursors[li] < lanes[li].length) {
+        events.push(lanes[li][cursors[li]]);
+        cursors[li]++;
+        remaining--;
+      }
     }
   }
-  events.sort((a, b) => a.trade.hour - b.trade.hour);
 
   if (hadPriorState && !sameSeason) {
-    queue.push(`🚀 <b>New season</b> — S${season} is live. All agents reset to $1,000.`);
+    queue.push(`🚀 <b>New 24h cycle</b> — S${season} is live. Fresh round, every agent starts even.`);
   }
   for (let i = 0; i < events.length; i += EVENTS_PER_CHUNK) {
     const chunk = events.slice(i, i + EVENTS_PER_CHUNK);

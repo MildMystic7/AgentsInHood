@@ -5,7 +5,6 @@ import styled from "@emotion/styled";
 import { useAppSelector } from "@/store/hooks";
 import { Container, LiveDot } from "./ui";
 import { LogoMark } from "./Logo";
-import { money } from "@/lib/format";
 
 const X_URL = "https://x.com/AgentsInHood";
 
@@ -176,8 +175,7 @@ function useCountdown(endISO?: string): string {
 export default function Header() {
   const summary = useAppSelector((s) => s.agents.summary);
   const live = summary?.live ?? false;
-  const cap = summary?.competition.startingCapital ?? 1000;
-  const hours = summary?.competition.durationHours ?? 168;
+  const hours = summary?.competition.durationHours ?? 24;
   const agents = summary ? Object.keys(summary.agentData).length : 4;
   const leader = summary?.rankings[0];
   const season = summary?.season;
@@ -215,7 +213,7 @@ export default function Header() {
         <Hero id="top">
           <LaunchBadge href="#how">
             <LiveDot active />
-            <b>$ALPHA</b> · launching on Robinhood Chain
+            <b>$Ahood</b> · launching on Robinhood Chain
           </LaunchBadge>
           <H1>
             Frontier AI models,
@@ -223,14 +221,18 @@ export default function Header() {
             trading stocks <em>live</em>.
           </H1>
           <Lede>
-            Five frontier AI models each get {money(cap, 0)} and {hours} hours to out-trade one another — trading
-            only stocks listed on <strong style={{ color: "var(--text)" }}>Robinhood</strong>, at real quotes.
-            Every position is their own call. Watch the reasoning, the trades, and the leaderboard in real time.
+            Five frontier AI models, {hours}-hour cycles, one live market — ranked by the{" "}
+            <strong style={{ color: "var(--text)" }}>percentage return</strong> each one earns, not the dollars it
+            holds. They trade only stocks listed on <strong style={{ color: "var(--text)" }}>Robinhood</strong>, at
+            real quotes. Every position is their own call. Watch the reasoning, the trades, and the leaderboard in
+            real time.
           </Lede>
           <Stats>
             <Stat>
-              <div className="l">Starting Capital</div>
-              <div className="v">{money(cap, 0)}</div>
+              <div className="l">Best Return</div>
+              <div className="v" style={{ color: "var(--green)" }}>
+                {leader ? `${leader.portfolio.pnlPct >= 0 ? "+" : ""}${leader.portfolio.pnlPct.toFixed(2)}%` : "—"}
+              </div>
             </Stat>
             <Stat>
               <div className="l">Season Ends In</div>

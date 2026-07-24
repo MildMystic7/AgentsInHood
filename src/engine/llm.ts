@@ -173,6 +173,7 @@ function pick<T>(arr: T[], r: number): T {
  */
 export function mockDecide(agent: AgentConfig, ctx: DecisionContext, rand: () => number = Math.random): Decision {
   const r = rand();
+  const r2 = rand(); // independent draw so the *wording* varies even when the move repeats
   const ranked = [...ctx.tradable].sort((a, b) => (ctx.momentum[b.symbol] ?? 0) - (ctx.momentum[a.symbol] ?? 0));
   const hottest = ranked[0];
   const coldest = ranked[ranked.length - 1];
@@ -241,14 +242,31 @@ export function mockDecide(agent: AgentConfig, ctx: DecisionContext, rand: () =>
       // Hyperactive momentum scalper: loves high-beta names and fast rotations.
       if (cash > 40 && r > 0.25) {
         const target = highBeta.length && r > 0.4 ? pick(highBeta, r) : hottest;
+        const s = target.symbol, m = fmt(target.symbol);
         const size = Math.min(cash * (0.4 + r * 0.4), cash);
-        return { action: "BUY", symbol: target.symbol, usdAmount: round(size), reasoning: `Piling into ${target.symbol} (${fmt(target.symbol)}) — the high-beta names are where the moves are, and I want in before the tape confirms.` };
+        return { action: "BUY", symbol: target.symbol, usdAmount: round(size), reasoning: pick([
+          `Piling into ${s} (${m}) — high-beta is where the moves are, and I want in before the tape confirms.`,
+          `${s} is coiling at ${m}; loading up now, this is the kind of name that gaps while everyone hesitates.`,
+          `Front-running the momentum in ${s} (${m}). Sizing up — fortune favours the fast here.`,
+          `Ripping the trigger on ${s} at ${m}. The volatility is the opportunity, not the risk.`,
+          `${s} (${m}) is my kind of chaos — going in heavy before the crowd wakes up.`,
+        ], r2) };
       }
       if (ctx.holdings.length && r < 0.4) {
         const flip = pick(ctx.holdings, r);
-        return { action: "SELL", symbol: flip.symbol, usdAmount: round(flip.value), reasoning: `Flipping ${flip.symbol} (${fmt(flip.symbol)}) to rotate into the next mover — no diamond hands here.` };
+        const s = flip.symbol, m = fmt(flip.symbol);
+        return { action: "SELL", symbol: flip.symbol, usdAmount: round(flip.value), reasoning: pick([
+          `Flipping ${s} (${m}) to rotate into the next mover — no diamond hands here.`,
+          `Dumping ${s} at ${m}; it's done moving and I need the powder for the next spike.`,
+          `Cutting ${s} (${m}) loose — I trade the tape, not the ticker. On to the next.`,
+          `Booking ${s} (${m}) and rotating out. Standing still is the only way to lose in this game.`,
+        ], r2) };
       }
-      return { action: "HOLD", usdAmount: 0, reasoning: `Reloading — waiting for the next volatility spike to pounce.` };
+      return { action: "HOLD", usdAmount: 0, reasoning: pick([
+        `Reloading — waiting for the next volatility spike to pounce.`,
+        `Flat and coiled. Nothing's moving fast enough to bother — yet.`,
+        `Sitting on my hands for once; the tape's too quiet to scalp.`,
+      ], r2) };
     }
   }
 }
