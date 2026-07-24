@@ -72,6 +72,13 @@ async function tick(agent: (typeof AGENTS)[number]): Promise<void> {
     reasoning: decision.reasoning,
   });
 
+  if (execution.status === "rejected" || execution.status === "failed") {
+    console.log(
+      `[${agent.id}] ${decision.action} ${decision.symbol} rejected — ${execution.reason || execution.status}`,
+    );
+    return;
+  }
+
   // In live mode the local portfolio only moves after an on-chain confirmation.
   // Off/dry-run preserve the arena behaviour without pretending a tx exists.
   if (execution.mode === "live" && execution.status !== "confirmed") {

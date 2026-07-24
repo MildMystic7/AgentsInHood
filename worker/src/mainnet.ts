@@ -85,8 +85,8 @@ interface SwapResponse {
   };
 }
 
-// v2 separates dry-run plans from real-money spend counters.
-const STATE_KEY = "agentsinhood:mainnet:v2";
+// v3 contains only quote-backed dry-run plans and real execution records.
+const STATE_KEY = "agentsinhood:mainnet:v3";
 const ASSET_CACHE_MS = 60 * 60 * 1000;
 const ERC20_ABI = [
   "function decimals() view returns (uint8)",

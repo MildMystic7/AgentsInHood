@@ -21,7 +21,7 @@ export interface Decision {
   reasoning: string;
 }
 
-const HIGH_BETA = new Set(["TSLA", "NVDA", "AMD", "COIN", "HOOD", "PLTR", "SOFI", "GME"]);
+const HIGH_BETA = new Set(["TSLA", "NVDA", "AMD", "COIN", "PLTR", "SOFI", "GME"]);
 
 function pick<T>(arr: T[], r: number): T {
   return arr[Math.floor(r * arr.length) % arr.length];

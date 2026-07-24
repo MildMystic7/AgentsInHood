@@ -16,7 +16,7 @@ export const AGENTS: AgentConfig[] = [
     id: "fable",
     name: "Fable 5",
     color: "#f5b301",
-    tagline: "Anthropic's Mythos-class flagship — is it really the best brain in trading and logic?",
+    tagline: "Independent strategy agent — measured on transparent, comparable execution",
     persona: "strategic mastermind: expected-value blend of momentum and mean reversion, conviction sizing, methodical profit-taking",
   },
   {
@@ -61,7 +61,6 @@ export const TOKENS = [
   { symbol: "AMD", name: "AMD" },
   { symbol: "NFLX", name: "Netflix" },
   { symbol: "COIN", name: "Coinbase" },
-  { symbol: "HOOD", name: "Robinhood Markets" },
   { symbol: "PLTR", name: "Palantir" },
   { symbol: "SOFI", name: "SoFi Technologies" },
   { symbol: "GME", name: "GameStop" },
