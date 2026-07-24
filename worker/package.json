@@ -1,12 +1,10 @@
 {
-  "name": "alphahood-worker",
-  "version": "0.1.0",
+  "name": "agentsinhood-worker",
+  "version": "0.2.0",
   "private": true,
-  "description": "Persistent Railway worker for AlphaHood: real per-agent decision timers (2-10min) and on-chain trade logging on Robinhood Chain testnet.",
+  "description": "Guarded mainnet execution worker for the AgentsInHood AI trading pilot on Robinhood Chain.",
   "scripts": {
-    "compile": "hardhat compile",
-    "new-wallet": "node scripts/new-wallet.js",
-    "deploy": "node scripts/deploy.js",
+    "new-mainnet-wallet": "node scripts/new-mainnet-wallet.js",
     "dev": "tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js"
@@ -17,7 +15,6 @@
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
-    "hardhat": "^2.22.17",
     "tsx": "^4.19.2",
     "typescript": "^5.6.2"
   }

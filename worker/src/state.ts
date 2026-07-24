@@ -3,9 +3,8 @@ import { STARTING_CAPITAL } from "./config";
 import type { PortfolioState } from "./decide";
 
 // In-process source of truth. KV (if configured) is a best-effort backup so
-// portfolios survive restarts — but the worker is fully functional without it
-// (state just resets on restart, which is fine for a testnet demo). This is
-// what lets us deploy without wiring up a shared KV store first.
+// portfolios survive restarts. The public arena can fall back to memory, but
+// mainnet live mode separately requires persistent KV before it will start.
 const memory = new Map<string, PortfolioState>();
 
 function freshState(): PortfolioState {

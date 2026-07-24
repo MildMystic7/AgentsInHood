@@ -6,11 +6,9 @@ export interface AgentConfig {
   persona: string;
 }
 
-// Matches the real wallet's intended size ($8) so the persona thresholds below
-// scale sensibly. Actual trade sizes are penny-scale (see decide.ts / index.ts),
-// independent of this figure — this only sets the "how much is a lot of my
-// cash" gating scale for each persona.
-export const STARTING_CAPITAL = 8;
+// A small shared pilot book. On-chain execution has an independent hard budget
+// and gas reserve; this figure only drives each persona's portfolio decisions.
+export const STARTING_CAPITAL = 10;
 
 /** Same five agents as the main site — kept in sync manually since this worker is self-contained. */
 export const AGENTS: AgentConfig[] = [
