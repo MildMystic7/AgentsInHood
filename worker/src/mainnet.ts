@@ -319,6 +319,44 @@ function txRequest(swap: SwapResponse["swap"]): {
   };
 }
 
+async function assertTransactionBudget(
+  provider: JsonRpcProvider,
+  walletAddress: string,
+  request: {
+    to: string;
+    data: string;
+    value?: bigint;
+    gasLimit?: bigint;
+    gasPrice?: bigint;
+    maxFeePerGas?: bigint;
+    maxPriorityFeePerGas?: bigint;
+  },
+  ethPriceUsd: number,
+): Promise<void> {
+  if (!Number.isFinite(ethPriceUsd) || ethPriceUsd <= 0) {
+    throw new Error("ETH/USD price is unavailable for the gas check");
+  }
+  const estimatedGas =
+    request.gasLimit || (await provider.estimateGas({ ...request, from: walletAddress }));
+  const feeData = await provider.getFeeData();
+  const feePerGas =
+    request.maxFeePerGas || request.gasPrice || feeData.maxFeePerGas || feeData.gasPrice;
+  if (!feePerGas) throw new Error("Unable to determine the transaction gas price");
+
+  const gasWei = estimatedGas * feePerGas;
+  const gasUsd = Number(formatEther(gasWei)) * ethPriceUsd;
+  const maxGasUsd = envInt("MAINNET_MAX_GAS_USD_CENTS", 5) / 100;
+  if (!Number.isFinite(gasUsd) || gasUsd > maxGasUsd) {
+    throw new Error(`Estimated transaction gas $${gasUsd.toFixed(4)} exceeds $${maxGasUsd.toFixed(2)}`);
+  }
+
+  const balance = await provider.getBalance(walletAddress);
+  const reserve = parseEther(process.env.MAINNET_MIN_GAS_RESERVE_ETH || "0.001");
+  if (balance - (request.value || 0n) - gasWei < reserve) {
+    throw new Error("Transaction would breach the protected ETH gas reserve");
+  }
+}
+
 async function amountForTrade(
   action: TradeAction,
   usdCents: number,
@@ -356,6 +394,7 @@ async function maybeApprove(
   tokenAddress: string,
   tokenOut: string,
   amount: string,
+  ethPriceUsd: number,
 ): Promise<string | undefined> {
   const response = await uniswapRequest<{
     cancel?: SwapResponse["swap"] | null;
@@ -375,12 +414,23 @@ async function maybeApprove(
   if (response.approval.to.toLowerCase() !== tokenAddress.toLowerCase()) {
     throw new Error("Approval target does not match the official stock token");
   }
-  const tx = await wallet.sendTransaction({
+  const provider = wallet.provider;
+  if (!(provider instanceof JsonRpcProvider)) throw new Error("Approval wallet has no mainnet provider");
+  const approvalRequest = {
     to: response.approval.to,
     data: response.approval.data,
     value: response.approval.value ? BigInt(response.approval.value) : undefined,
     gasLimit: response.approval.gasLimit ? BigInt(response.approval.gasLimit) : undefined,
-  });
+    gasPrice: response.approval.gasPrice ? BigInt(response.approval.gasPrice) : undefined,
+    maxFeePerGas: response.approval.maxFeePerGas
+      ? BigInt(response.approval.maxFeePerGas)
+      : undefined,
+    maxPriorityFeePerGas: response.approval.maxPriorityFeePerGas
+      ? BigInt(response.approval.maxPriorityFeePerGas)
+      : undefined,
+  };
+  await assertTransactionBudget(provider, wallet.address, approvalRequest, ethPriceUsd);
+  const tx = await wallet.sendTransaction(approvalRequest);
   const receipt = await tx.wait(1);
   if (!receipt || receipt.status !== 1) throw new Error("Token approval transaction failed");
   return receipt.hash;
@@ -425,7 +475,7 @@ async function executeLiveTrade(args: {
 
   let approvalTxHash: string | undefined;
   if (args.action === "SELL") {
-    approvalTxHash = await maybeApprove(wallet, tokenIn, tokenOut, amount);
+    approvalTxHash = await maybeApprove(wallet, tokenIn, tokenOut, amount, args.ethPriceUsd);
   }
 
   const quoteResponse = await uniswapRequest<QuoteResponse>("/quote", {
@@ -466,7 +516,7 @@ async function executeLiveTrade(args: {
   if (args.action === "BUY" && (request.value || 0n) > BigInt(amount)) {
     throw new Error("Swap transaction attempts to spend more ETH than quoted");
   }
-  await provider.estimateGas({ ...request, from: wallet.address });
+  await assertTransactionBudget(provider, wallet.address, request, args.ethPriceUsd);
   const tx = await wallet.sendTransaction(request);
   const receipt = await tx.wait(1);
   if (!receipt || receipt.status !== 1) throw new Error("Swap transaction failed");
