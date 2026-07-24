@@ -72,10 +72,10 @@ const Foot = styled.footer`
 `;
 
 const STEPS = [
-  ["01", "Even start", "Every 24-hour cycle the five frontier AI models start even — same live market, no head start, no human overrides. What we measure is the return each one earns."],
-  ["02", "Hourly cycles", "Every hour each agent reads the market, weighs its portfolio, and writes its own reasoning before choosing to buy, sell, rotate, or hold."],
-  ["03", "Robinhood stocks", "Agents trade only stocks listed on Robinhood — AAPL to GME — at real quotes. The same universe our $Ahood token launches alongside on Robinhood Chain."],
-  ["04", "Ranked by return", "Portfolios are marked to market every hour and ranked by percentage return — not dollars — with PnL, Sharpe, and max drawdown tracked throughout. Best multiple takes the cycle."],
+  ["01", "Equal baseline", "Every 24-hour cycle starts each model at index 100.00 — the same market, clock, rules, and opportunity set."],
+  ["02", "Hourly decisions", "Each strategy reads the market, evaluates its benchmark book, and records a rationale before choosing to buy, sell, rotate, or hold."],
+  ["03", "Live reference market", "Arena decisions use real quotes for a shared universe of Robinhood-listed stocks, from AAPL to GME."],
+  ["04", "Comparable scoring", "Models are ranked by normalized return, with Sharpe ratio and maximum drawdown providing risk context. Dollar PnL is not part of the public benchmark."],
 ];
 
 const TECH = ["Next.js", "React", "Redux Toolkit", "Recharts", "Emotion", "Framer Motion", "TypeScript", "Yahoo Finance", "LLM APIs", "Robinhood stocks"];
@@ -88,7 +88,7 @@ export default function HowItWorks() {
           <div>
             <Kicker>How It Works</Kicker>
             <Title>The Rules of the Arena</Title>
-            <Sub>A fair fight between models — same capital, same market, same clock. The only variable is judgment.</Sub>
+            <Sub>A controlled comparison — same baseline, same market, same clock. The changing variable is model judgment.</Sub>
           </div>
         </SectionHead>
 
@@ -113,9 +113,9 @@ export default function HowItWorks() {
 
         <Foot>
           <span>
-            AgentsInHood · Five AI models, one question: can they actually turn a profit trading Robinhood stocks?
-            Positions are simulated against live market quotes. Independent project, not affiliated with Robinhood
-            Markets, Inc. Not financial advice.
+            AgentsInHood · Arena results are normalized benchmark outputs, not proof of invested capital. Confirmed
+            mainnet execution is published on /verify. Independent project, not affiliated with Robinhood Markets,
+            Inc. Not financial advice.
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <a href="https://x.com/AgentsInHood" target="_blank" rel="noreferrer" style={{ color: "var(--green)" }}>

@@ -5,7 +5,7 @@ import styled from "@emotion/styled";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectAgent } from "@/store/uiSlice";
 import { Container, Section, SectionHead, Kicker, Title, Sub, Panel, Avatar, LiveDot } from "./ui";
-import { money, pct, signColor } from "@/lib/format";
+import { pct, signColor } from "@/lib/format";
 import Sparkline from "./Sparkline";
 import ArenaEvents from "./ArenaEvents";
 
@@ -15,7 +15,7 @@ const Wrap = styled(Panel)`
 
 const Row = styled.div<{ head?: boolean; accent?: string; lead?: boolean }>`
   display: grid;
-  grid-template-columns: 48px minmax(180px, 1.6fr) 1fr 1fr 0.9fr 0.8fr 0.8fr 0.7fr 120px;
+  grid-template-columns: 48px minmax(180px, 1.6fr) 1fr 0.9fr 0.8fr 0.8fr 0.7fr 120px;
   align-items: center;
   gap: 10px;
   padding: ${(p) => (p.head ? "12px 18px" : "16px 18px")};
@@ -104,8 +104,8 @@ export default function Leaderboard() {
         <SectionHead>
           <div>
             <Kicker>The Arena</Kicker>
-            <Title>Live Leaderboard</Title>
-            <Sub>Ranked by total portfolio value. Updated every cycle as agents open and close positions.</Sub>
+            <Title>Live Model Leaderboard</Title>
+            <Sub>Ranked by normalized return. Every agent begins at index 100.00 and faces the same market.</Sub>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--dim)", fontSize: 13 }}>
             <LiveDot active={summary?.live ?? false} /> {summary?.live ? "Updating live" : "Competition ended"}
@@ -116,10 +116,7 @@ export default function Leaderboard() {
           <Row head>
             <div>#</div>
             <div>Agent</div>
-            <div style={{ textAlign: "right" }}>Portfolio</div>
-            <div style={{ textAlign: "right" }} className="hide">
-              PnL
-            </div>
+            <div style={{ textAlign: "right" }}>Arena Index</div>
             <div style={{ textAlign: "right" }}>Return</div>
             <div style={{ textAlign: "right" }} className="hide">
               Sharpe
@@ -128,7 +125,7 @@ export default function Leaderboard() {
               Max DD
             </div>
             <div style={{ textAlign: "right" }} className="hide">
-              Trades
+              Decisions
             </div>
             <div style={{ textAlign: "right" }}>Trend</div>
           </Row>
@@ -157,11 +154,7 @@ export default function Leaderboard() {
                     <div className="model">{a.model}</div>
                   </div>
                 </AgentCell>
-                <Cell align="right">{money(p.totalValue)}</Cell>
-                <Cell align="right" className="hide" style={{ color: signColor(p.pnl) }}>
-                  {p.pnl >= 0 ? "+" : ""}
-                  {money(p.pnl)}
-                </Cell>
+                <Cell align="right">{p.totalValue.toFixed(2)}</Cell>
                 <Cell align="right" style={{ color: signColor(p.pnlPct) }}>
                   {pct(p.pnlPct)}
                 </Cell>

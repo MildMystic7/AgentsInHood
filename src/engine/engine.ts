@@ -1,5 +1,6 @@
 import {
   AGENTS,
+  ARENA_INDEX_BASE,
   STARTING_CAPITAL,
   DURATION_HOURS,
   TICK_SECONDS,
@@ -145,7 +146,7 @@ function applyDecision(a: EngineAgent, d: Decision, prices: PriceFeed, hour: num
     const usd = Math.min(amount, a.cash);
     if (usd >= 5) {
       buy(a, symbol, usd, prices, hour, ts, d.reasoning);
-      logTrade = `BUY ${symbol} $${usd.toFixed(2)}`;
+      logTrade = `BUY ${symbol} · ${publicIndex(usd).toFixed(2)}% of baseline`;
     }
   } else if (d.action === "SELL" && symbol && a.holdings.has(symbol)) {
     const pos = a.holdings.get(symbol)!;
@@ -153,7 +154,7 @@ function applyDecision(a: EngineAgent, d: Decision, prices: PriceFeed, hour: num
     const usd = amount > 0 ? Math.min(amount, value) : value;
     if (usd >= 1) {
       sell(a, symbol, usd, prices, hour, ts, d.reasoning);
-      logTrade = `SELL ${symbol} $${usd.toFixed(2)}`;
+      logTrade = `SELL ${symbol} · ${publicIndex(usd).toFixed(2)}% of baseline`;
     }
   } else if (d.action === "SWAP" && symbol) {
     const from = [...a.holdings.entries()].sort(
@@ -162,11 +163,11 @@ function applyDecision(a: EngineAgent, d: Decision, prices: PriceFeed, hour: num
     if (from && from[0] !== symbol) {
       const value = from[1].tokens * prices.price(from[0]);
       swap(a, from[0], symbol, value, prices, hour, ts, d.reasoning);
-      logTrade = `SWAP ${from[0]}→${symbol} $${value.toFixed(2)}`;
+      logTrade = `SWAP ${from[0]}→${symbol} · ${publicIndex(value).toFixed(2)}% of baseline`;
     } else if (a.cash >= 5) {
       const usd = Math.min(Math.max(amount, a.cash * 0.25), a.cash);
       buy(a, symbol, usd, prices, hour, ts, d.reasoning);
-      logTrade = `BUY ${symbol} $${usd.toFixed(2)}`;
+      logTrade = `BUY ${symbol} · ${publicIndex(usd).toFixed(2)}% of baseline`;
     }
   }
 
@@ -285,19 +286,19 @@ function portfolioOf(a: EngineAgent, prices: PriceFeed): Portfolio {
       name: t?.name ?? symbol,
       chain: t?.chain ?? CHAINS[t?.chainId] ?? "Ethereum",
       chainId: t?.chainId ?? 1,
-      tokens: r6(p.tokens),
+      tokens: publicQuantity(p.tokens),
       avgCost: rp(p.avgCost),
       currentPrice: rp(price),
-      value: r2(value),
-      pnl: r2(value - cost),
+      value: publicIndex(value),
+      pnl: publicIndex(value - cost),
       pnlPct: cost > 0 ? r2(((value - cost) / cost) * 100) : 0,
     };
   });
   const tv = totalValue(a, prices);
   return {
-    cash: r2(a.cash),
-    totalValue: r2(tv),
-    pnl: r2(tv - STARTING_CAPITAL),
+    cash: publicIndex(a.cash),
+    totalValue: publicIndex(tv),
+    pnl: publicIndex(tv - STARTING_CAPITAL),
     pnlPct: r2(((tv - STARTING_CAPITAL) / STARTING_CAPITAL) * 100),
     maxDrawdown: r2(a.maxDrawdown),
     sharpeRatio: sharpe(a),
@@ -317,16 +318,20 @@ function toAgent(a: EngineAgent, prices: PriceFeed, includeLogs: boolean): Agent
     tagline: a.cfg.tagline,
     walletAddress: a.cfg.walletAddress,
     portfolio: portfolioOf(a, prices),
-    trades: includeLogs ? a.trades : [],
+    trades: includeLogs ? a.trades.map(publicTrade) : [],
     reasoningLogs: includeLogs ? a.reasoningLogs : [],
-    portfolioHistory: a.portfolioHistory,
+    portfolioHistory: a.portfolioHistory.map((point) => ({
+      ...point,
+      value: publicIndex(point.value),
+      cash: publicIndex(point.cash),
+    })),
   };
 }
 
 function competitionFor(season: number): Competition {
   const start = new Date(seasonStartMs(season));
   const end = new Date(seasonStartMs(season + 1));
-  return { start: start.toISOString(), end: end.toISOString(), durationHours: DURATION_HOURS, startingCapital: STARTING_CAPITAL };
+  return { start: start.toISOString(), end: end.toISOString(), durationHours: DURATION_HOURS, startingCapital: ARENA_INDEX_BASE };
 }
 
 // ── Memoized state per (season, hour, anchor) ────────────────────────────────
@@ -419,13 +424,25 @@ export async function getHistoryResponse(): Promise<HistoryResponse> {
   const snap = await getState();
   const agentHistory: HistoryResponse["agentHistory"] = {};
   for (const a of snap.agents) {
-    agentHistory[a.cfg.id] = { trades: [...a.trades].reverse(), reasoningLogs: [...a.reasoningLogs].reverse() };
+    agentHistory[a.cfg.id] = {
+      trades: [...a.trades].reverse().map(publicTrade),
+      reasoningLogs: [...a.reasoningLogs].reverse(),
+    };
   }
   return { agentHistory };
 }
 
 function r2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+function publicIndex(n: number): number {
+  return r2((n / STARTING_CAPITAL) * ARENA_INDEX_BASE);
+}
+function publicTrade(t: Trade): Trade {
+  return { ...t, tokens: publicQuantity(t.tokens), value: publicIndex(t.value) };
+}
+function publicQuantity(n: number): number {
+  return r6(n * (ARENA_INDEX_BASE / STARTING_CAPITAL));
 }
 function r4(n: number): number {
   return Math.round(n * 1e4) / 1e4;

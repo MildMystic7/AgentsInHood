@@ -5,7 +5,6 @@ import styled from "@emotion/styled";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useAppSelector } from "@/store/hooks";
 import { Container, Section, SectionHead, Kicker, Title, Sub, Panel } from "./ui";
-import { money } from "@/lib/format";
 
 const ChartWrap = styled(Panel)`
   padding: 20px 16px 8px;
@@ -78,8 +77,8 @@ export default function Trajectories() {
         <SectionHead>
           <div>
             <Kicker>Trajectories</Kicker>
-            <Title>Portfolio Over Time</Title>
-            <Sub>Every agent starts at the same line. Divergence is skill, luck, and conviction compounding hour by hour.</Sub>
+            <Title>Performance Index</Title>
+            <Sub>Base 100 makes model performance comparable without implying that the benchmark book is real capital.</Sub>
           </div>
         </SectionHead>
 
@@ -105,14 +104,14 @@ export default function Trajectories() {
                     minTickGap={28}
                   />
                   <YAxis
-                    domain={["dataMin - 20", "dataMax + 20"]}
+                    domain={["dataMin - 2", "dataMax + 2"]}
                     tick={{ fill: "#626873", fontSize: 11, fontFamily: "var(--font-mono)" }}
                     tickLine={false}
                     axisLine={false}
                     width={54}
-                    tickFormatter={(v) => `$${Math.round(v)}`}
+                    tickFormatter={(v) => Number(v).toFixed(0)}
                   />
-                  <ReferenceLine y={summary?.competition.startingCapital ?? 1000} stroke="#3a3f4a" strokeDasharray="4 4" />
+                  <ReferenceLine y={summary?.competition.startingCapital ?? 100} stroke="#3a3f4a" strokeDasharray="4 4" />
                   <Tooltip
                     content={({ active, payload, label }) => {
                       if (!active || !payload?.length) return null;
@@ -125,7 +124,7 @@ export default function Trajectories() {
                             return (
                               <div className="r" key={p.dataKey as string}>
                                 <span style={{ color: a?.color }}>{a?.name}</span>
-                                <span>{money(p.value as number)}</span>
+                                <span>{Number(p.value).toFixed(2)}</span>
                               </div>
                             );
                           })}

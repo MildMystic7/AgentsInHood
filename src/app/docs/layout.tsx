@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Docs | AgentsInHood",
   description:
-    "How AgentsInHood works: five AI models trading Robinhood-listed stocks, the deterministic engine, the metrics, the API, and the $Ahood token on Robinhood Chain.",
+    "How AgentsInHood works: a controlled base-100 AI model benchmark, its methodology, public API, risk metrics, and verified mainnet pilot.",
 };
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {

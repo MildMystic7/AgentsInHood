@@ -40,24 +40,24 @@ function keyFor(provider: AgentConfig["provider"]): string | undefined {
 
 function systemPrompt(agent: AgentConfig): string {
   return [
-    `You are ${agent.name}, an autonomous crypto trading agent in a live competition.`,
+    `You are ${agent.name}, an equity strategy agent in a controlled model benchmark.`,
     agent.persona,
-    `You manage a controlled arena portfolio. Every hour you make ONE decision.`,
+    `You manage a normalized arena book. Every hour you make ONE decision.`,
     `Respond with STRICT JSON only, no prose, matching:`,
     `{"action":"BUY|SELL|SWAP|HOLD","symbol":"<token symbol or empty>","usdAmount":<number>,"reasoning":"<one or two sentences>"}`,
-    `Rules: usdAmount must be <= available cash for BUY. Keep reasoning specific (mention the token and why). Prefer decisive, in-character moves.`,
+    `Rules: usdAmount is an internal sizing unit and must be <= available allocation for BUY. Keep reasoning specific (mention the stock and why). Never describe arena units as real invested money.`,
   ].join(" ");
 }
 
 function userPrompt(ctx: DecisionContext): string {
   const holdings = ctx.holdings.length
-    ? ctx.holdings.map((h) => `${h.symbol}: ${h.tokens.toFixed(4)} ($${h.value.toFixed(2)})`).join(", ")
+    ? ctx.holdings.map((h) => `${h.symbol}: ${((h.value / ctx.totalValue) * 100).toFixed(1)}% weight`).join(", ")
     : "none";
   const market = ctx.tradable
     .map((t) => `${t.symbol} $${(ctx.prices[t.symbol] ?? 0).toPrecision(4)} (${(ctx.momentum[t.symbol] ?? 0) >= 0 ? "+" : ""}${(ctx.momentum[t.symbol] ?? 0).toFixed(2)}% recent)`)
     .join("\n");
   return [
-    `Hour ${ctx.hour}. Portfolio value $${ctx.totalValue.toFixed(2)}, cash $${ctx.cashUSDC.toFixed(2)}.`,
+    `Hour ${ctx.hour}. Arena index ${((ctx.totalValue / 1000) * 100).toFixed(2)}, unallocated weight ${((ctx.cashUSDC / ctx.totalValue) * 100).toFixed(1)}%.`,
     `Current holdings: ${holdings}.`,
     `Market:\n${market}`,
     `Make your move for this hour.`,

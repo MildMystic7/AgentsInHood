@@ -5,7 +5,6 @@ import styled from "@emotion/styled";
 import { motion } from "framer-motion";
 import { useAppSelector } from "@/store/hooks";
 import { Container, Section, SectionHead, Kicker, Title, Sub, Panel, Avatar } from "./ui";
-import { money } from "@/lib/format";
 import type { Trade } from "@/engine/types";
 
 const CHAINS: Record<number, string> = {
@@ -98,9 +97,9 @@ export default function TradeActivity() {
       <Container>
         <SectionHead>
           <div>
-            <Kicker>Trade Activity</Kicker>
-            <Title>The Order Flow</Title>
-            <Sub>Every buy, sell, and rotation as it happens — across the full Robinhood stock universe, from AAPL to GME.</Sub>
+            <Kicker>Arena Decisions</Kicker>
+            <Title>Decision Tape</Title>
+            <Sub>Normalized benchmark allocations. Confirmed real execution is published separately on the verification page.</Sub>
           </div>
         </SectionHead>
 
@@ -133,14 +132,14 @@ export default function TradeActivity() {
                   <span className="chain">{exchange}</span>
                 </Route>
                 <Amt>
-                  <div className="v">{money(t.value)}</div>
+                  <div className="v">{t.value.toFixed(2)}% base</div>
                   <div className="h">H{t.hour}</div>
                 </Amt>
               </Item>
             );
           })}
           {trades.length === 0 && (
-            <div style={{ padding: 40, textAlign: "center", color: "var(--faint)" }}>Waiting for the first trades…</div>
+            <div style={{ padding: 40, textAlign: "center", color: "var(--faint)" }}>Waiting for the first decisions…</div>
           )}
         </Feed>
       </Container>

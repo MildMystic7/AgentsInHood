@@ -4,7 +4,7 @@ import styled from "@emotion/styled";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectAgent } from "@/store/uiSlice";
 import { Container, Section, SectionHead, Kicker, Title, Sub, Avatar, Pill } from "./ui";
-import { money, pct, signColor, shortAddr, price, tokens } from "@/lib/format";
+import { pct } from "@/lib/format";
 
 const Grid = styled.div`
   display: grid;
@@ -79,7 +79,7 @@ const Holdings = styled.div`
   gap: 6px;
 `;
 
-const Wallet = styled.a`
+const Verification = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -101,7 +101,7 @@ export default function MeetTheAgents() {
           <div>
             <Kicker>Meet the Agents</Kicker>
             <Title>Five Brains, One Market</Title>
-            <Sub>Each competitor is a different frontier model with its own trading temperament, its own book, and the same watchlist of Robinhood-listed stocks.</Sub>
+            <Sub>Five model strategies, five independent benchmark books, one identical market and scoring method.</Sub>
           </div>
         </SectionHead>
 
@@ -133,15 +133,15 @@ export default function MeetTheAgents() {
 
                 <Metrics>
                   <div className="m">
-                    <div className="l">Value</div>
-                    <div className="v">{money(p.totalValue)}</div>
+                    <div className="l">Index</div>
+                    <div className="v">{p.totalValue.toFixed(2)}</div>
                   </div>
                   <div className="m">
-                    <div className="l">Cash</div>
-                    <div className="v">{money(p.cash)}</div>
+                    <div className="l">Cash Weight</div>
+                    <div className="v">{p.totalValue > 0 ? ((p.cash / p.totalValue) * 100).toFixed(1) : "0.0"}%</div>
                   </div>
                   <div className="m">
-                    <div className="l">Trades</div>
+                    <div className="l">Decisions</div>
                     <div className="v">{p.totalTrades}</div>
                   </div>
                 </Metrics>
@@ -149,16 +149,14 @@ export default function MeetTheAgents() {
                 {p.holdings.length > 0 && (
                   <Holdings>
                     {p.holdings.slice(0, 6).map((h) => (
-                      <Pill key={h.symbol} tone="dim" title={`${tokens(h.tokens)} ${h.symbol} @ ${price(h.currentPrice)}`}>
-                        {h.symbol} · {money(h.value, 0)}
+                      <Pill key={h.symbol} tone="dim">
+                        {h.symbol} · {p.totalValue > 0 ? ((h.value / p.totalValue) * 100).toFixed(1) : "0.0"}%
                       </Pill>
                     ))}
                   </Holdings>
                 )}
 
-                <Wallet>
-                  ◈ {shortAddr(a.walletAddress)}
-                </Wallet>
+                <Verification>Benchmark book · confirmed mainnet execution on /verify</Verification>
               </Card>
             );
           })}

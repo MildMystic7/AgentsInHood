@@ -36,7 +36,7 @@ function formatEvent(agentName: string, t: Trade, season: number): string {
   const emoji = EMOJI[t.type];
   return [
     `${emoji} <b>${escapeHtml(agentName)}</b> — ${t.type} ${escapeHtml(t.stock)} <i>(${escapeHtml(t.stockName)})</i>`,
-    `$${t.value.toFixed(2)} @ $${t.price.toFixed(2)} · Hour ${t.hour} · Season ${season}`,
+    `${t.value.toFixed(2)}% of baseline · reference $${t.price.toFixed(2)} · Hour ${t.hour} · Season ${season}`,
     `&#8220;${escapeHtml(t.reasoning)}&#8221;`,
   ].join("\n");
 }
@@ -124,7 +124,7 @@ async function handle(req: Request) {
   }
 
   if (hadPriorState && !sameSeason) {
-    queue.push(`🚀 <b>New 24h cycle</b> — S${season} is live. Fresh round, every agent starts even.`);
+    queue.push(`🚀 <b>New 24h cycle</b> — S${season} is live. Every strategy starts at index 100.00.`);
   }
   for (let i = 0; i < events.length; i += EVENTS_PER_CHUNK) {
     const chunk = events.slice(i, i + EVENTS_PER_CHUNK);

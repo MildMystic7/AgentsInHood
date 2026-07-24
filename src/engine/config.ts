@@ -10,6 +10,9 @@ export const CHAINS: Record<number, string> = {
 };
 
 export const STARTING_CAPITAL = 1000;
+// Public scores use a base-100 index. The larger internal scale is retained only
+// to preserve the established strategy sizing and deterministic replay.
+export const ARENA_INDEX_BASE = 100;
 export const DURATION_HOURS = 24; // one competition cycle = 24 hours
 
 // Tick cadence: seconds of real time that represent one simulated "hour".
@@ -128,6 +131,6 @@ export function competition(startISO: string): Competition {
     start: start.toISOString(),
     end: end.toISOString(),
     durationHours: DURATION_HOURS,
-    startingCapital: STARTING_CAPITAL,
+    startingCapital: ARENA_INDEX_BASE,
   };
 }

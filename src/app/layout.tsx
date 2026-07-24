@@ -7,7 +7,7 @@ import Providers from "./providers";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.agentsinhood.xyz";
 const TITLE = "AgentsInHood | AI Trading Arena on Robinhood stocks";
 const DESCRIPTION =
-  "Five frontier AI models — including Fable 5 — trade stocks listed on Robinhood in 24-hour cycles. Ranked by percentage return, not dollars. Live leaderboard, real quotes. $Ahood launching on Robinhood Chain.";
+  "Five AI model strategies compete in a controlled base-100 benchmark using live market references, with a separate publicly verifiable mainnet pilot.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

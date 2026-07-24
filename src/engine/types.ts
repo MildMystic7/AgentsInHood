@@ -19,8 +19,11 @@ export interface Holding {
 }
 
 export interface Portfolio {
+  /** Unallocated portion expressed in base-100 index points. */
   cash: number;
+  /** Public arena score, normalized to a 100.00 baseline. */
   totalValue: number;
+  /** Index-point change from the 100.00 baseline. */
   pnl: number;
   pnlPct: number;
   maxDrawdown: number;
@@ -42,6 +45,7 @@ export interface Trade {
   sector: string;
   tokens: number;
   price: number;
+  /** Allocation as a percentage of the initial benchmark book. */
   value: number;
   hour: number;
   timestamp: number;
@@ -78,6 +82,7 @@ export interface Competition {
   start: string;
   end: string;
   durationHours: number;
+  /** Legacy field name; this is the public arena baseline (100.00). */
   startingCapital: number;
 }
 

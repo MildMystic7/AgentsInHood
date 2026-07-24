@@ -7,7 +7,7 @@ import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, XAx
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeAgent } from "@/store/uiSlice";
 import { Avatar, Pill } from "./ui";
-import { money, pct, price, shortAddr, signColor, tokens } from "@/lib/format";
+import { pct, signColor } from "@/lib/format";
 
 const Backdrop = styled(motion.div)`
   position: fixed;
@@ -142,7 +142,7 @@ const Reason = styled.div`
   }
 `;
 
-const Wallet = styled.div`
+const Verification = styled.a`
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--faint);
@@ -178,7 +178,7 @@ export default function AgentModal() {
   }, [id, history]);
 
   const chartData = useMemo(() => agent?.portfolioHistory ?? [], [agent]);
-  const start = summary?.competition.startingCapital ?? 1000;
+  const start = summary?.competition.startingCapital ?? 100;
 
   return (
     <AnimatePresence>
@@ -219,19 +219,20 @@ export default function AgentModal() {
 
             <Grid6>
               <div className="m">
-                <div className="l">Portfolio</div>
-                <div className="v">{money(agent.portfolio.totalValue)}</div>
+                <div className="l">Arena Index</div>
+                <div className="v">{agent.portfolio.totalValue.toFixed(2)}</div>
               </div>
               <div className="m">
-                <div className="l">PnL</div>
-                <div className="v" style={{ color: signColor(agent.portfolio.pnl) }}>
-                  {agent.portfolio.pnl >= 0 ? "+" : ""}
-                  {money(agent.portfolio.pnl)}
+                <div className="l">Return</div>
+                <div className="v" style={{ color: signColor(agent.portfolio.pnlPct) }}>{pct(agent.portfolio.pnlPct)}</div>
+              </div>
+              <div className="m">
+                <div className="l">Cash Weight</div>
+                <div className="v">
+                  {agent.portfolio.totalValue > 0
+                    ? ((agent.portfolio.cash / agent.portfolio.totalValue) * 100).toFixed(1)
+                    : "0.0"}%
                 </div>
-              </div>
-              <div className="m">
-                <div className="l">Cash</div>
-                <div className="v">{money(agent.portfolio.cash)}</div>
               </div>
               <div className="m">
                 <div className="l">Sharpe</div>
@@ -242,12 +243,12 @@ export default function AgentModal() {
                 <div className="v">{agent.portfolio.maxDrawdown.toFixed(1)}%</div>
               </div>
               <div className="m">
-                <div className="l">Trades</div>
+                <div className="l">Decisions</div>
                 <div className="v">{agent.portfolio.totalTrades}</div>
               </div>
             </Grid6>
 
-            <SubTitle>Equity Curve</SubTitle>
+            <SubTitle>Performance Index</SubTitle>
             <div style={{ width: "100%", height: 180 }}>
               {mounted && chartData.length > 1 && (
                 <ResponsiveContainer>
@@ -262,12 +263,12 @@ export default function AgentModal() {
                       minTickGap={30}
                     />
                     <YAxis
-                      domain={["dataMin - 15", "dataMax + 15"]}
+                      domain={["dataMin - 2", "dataMax + 2"]}
                       tick={{ fill: "#626873", fontSize: 10, fontFamily: "var(--font-mono)" }}
                       tickLine={false}
                       axisLine={false}
                       width={48}
-                      tickFormatter={(v) => `$${Math.round(v)}`}
+                      tickFormatter={(v) => Number(v).toFixed(0)}
                     />
                     <ReferenceLine y={start} stroke="#3a3f4a" strokeDasharray="4 4" />
                     <Line type="monotone" dataKey="value" stroke={agent.color} strokeWidth={2} dot={false} isAnimationActive={false} />
@@ -283,10 +284,10 @@ export default function AgentModal() {
                   <HoldRow key={h.symbol}>
                     <span className="sym">{h.symbol}</span>
                     <span className="chain">{h.chain}</span>
-                    <span className="amt">
-                      {tokens(h.tokens)} @ {price(h.currentPrice)}
+                    <span className="amt">Benchmark weight</span>
+                    <span style={{ fontWeight: 700 }}>
+                      {agent.portfolio.totalValue > 0 ? ((h.value / agent.portfolio.totalValue) * 100).toFixed(1) : "0.0"}%
                     </span>
-                    <span style={{ fontWeight: 700 }}>{money(h.value)}</span>
                     <span style={{ color: signColor(h.pnlPct), width: 72, textAlign: "right" }}>{pct(h.pnlPct)}</span>
                   </HoldRow>
                 ))}
@@ -307,7 +308,7 @@ export default function AgentModal() {
               </>
             )}
 
-            <Wallet>◈ {shortAddr(agent.walletAddress)}</Wallet>
+            <Verification href="/verify">Shared mainnet pilot · verify confirmed execution →</Verification>
           </Sheet>
         </Backdrop>
       )}
