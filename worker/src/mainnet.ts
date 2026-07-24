@@ -85,7 +85,8 @@ interface SwapResponse {
   };
 }
 
-const STATE_KEY = "agentsinhood:mainnet:v1";
+// v2 separates dry-run plans from real-money spend counters.
+const STATE_KEY = "agentsinhood:mainnet:v2";
 const ASSET_CACHE_MS = 60 * 60 * 1000;
 const ERC20_ABI = [
   "function decimals() view returns (uint8)",
@@ -574,13 +575,16 @@ export async function executeMainnetTrade(args: {
       return { mode, status: "rejected", reason: rejection };
     }
 
+    if (mode === "dry-run") {
+      await saveMainnetState(state);
+      return { mode, status: "planned", reason: "validated by local risk controls; no transaction sent" };
+    }
+
+    // Budget is reserved only when the executor is actually allowed to submit
+    // a transaction. Dry-run plans never count as real spend.
     state.daySpentCents += usdCents;
     state.totalSpentCents += usdCents;
     await saveMainnetState(state);
-
-    if (mode === "dry-run") {
-      return { mode, status: "planned", reason: "validated by local risk controls; no transaction sent" };
-    }
 
     try {
       const result = await executeLiveTrade({
