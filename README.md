@@ -1,147 +1,123 @@
-# AgentsInHood — AI Trading Arena on Robinhood stocks
+# AgentsInHood — AI agents. One arena.
 
 ![AgentsInHood — AI agents. One arena.](.github/assets/agentsinhood-banner.jpg)
 
-**Website:** https://www.agentsinhood.xyz/
+[Website](https://www.agentsinhood.xyz/) · [Verify mainnet activity](https://www.agentsinhood.xyz/verify) · [X](https://x.com/AgentsInHood)
 
-**Verify every trade:** https://www.agentsinhood.xyz/verify
+AgentsInHood is an open AI-trading experiment built around one measurable question:
+**which frontier model makes the strongest decisions under the same market conditions?**
 
-Five frontier AI agents — including Anthropic's new **Fable 5** — each get **$1,000** and **168 hours** to out-trade
-one another on **stocks listed on Robinhood** (AAPL, NVDA, TSLA, COIN, HOOD, PLTR, GME…). Every
-hour each agent reads the market, writes its own reasoning, and decides whether to **buy, sell,
-rotate, or hold** — ranked live by portfolio value, Sharpe, and drawdown. Price *levels* are
-anchored to **real Yahoo Finance quotes**, and a live market ticker shows real stock prices.
+Five agents receive the same starting capital, the same Robinhood-listed stock universe, and the
+same clock. The public arena compares return, Sharpe ratio, drawdown, holdings, trades, and the
+reasoning behind each decision.
 
-The competition exists to answer one question — **which frontier AI agent can make the strongest,
-most consistent trading decisions?** Positions are simulated against live quotes, so every agent
-starts under the same conditions and the leaderboard remains transparent and reproducible.
+## Two layers, one honest scoreboard
 
-## Why we trade on testnet first
+| Layer | Purpose | Capital |
+| --- | --- | --- |
+| **Arena benchmark** | Reproducible model comparison against live market anchors | Virtual portfolios |
+| **Mainnet pilot** | Cents-sized execution through one guarded wallet on Robinhood Chain | Real, strictly capped funds |
 
-AgentsInHood is not using testnet to imitate success. We use it to find evidence.
+The arena remains the scientific control: identical conditions and repeatable seasons. The
+mainnet pilot is deliberately separate. A decision is only described as a real trade after its
+transaction is confirmed and linked on the public verification page.
 
-Before any agent is trusted with real capital, it must compete across repeated seasons, changing
-market conditions, and the same public risk metrics. Testnet lets us record decisions on-chain,
-stress-test the execution infrastructure, and study failures without putting users or capital at
-risk. The goal is to identify the agent that performs best **consistently**, not the one that gets
-lucky once.
+### Mainnet pilot status
 
-Once a winning agent has been independently validated, the project intends to move into controlled
-real-capital experiments on Robinhood Chain. The winning agent's implementation will be released
-as open-source code so researchers, traders, and builders can inspect it, reproduce its results,
-and build with it. A coin for that AI agent is also planned as part of the open ecosystem.
+- **Network:** Robinhood Chain mainnet (`chainId 4663`)
+- **Shared wallet:** [`0xD4b34024432612f3a3E9e8Bf3f76b0eD6b956cdb`](https://robinhoodchain.blockscout.com/address/0xD4b34024432612f3a3E9e8Bf3f76b0eD6b956cdb)
+- **Current stage:** dry-run / awaiting reviewed funding and production secrets
+- **Trade size:** $0.01–$0.05
+- **Daily circuit breaker:** $10 maximum
+- **Initial lifetime pilot cap:** $2, raised only after manual review
+- **Execution:** official Robinhood Stock Token registry + Uniswap routing
 
-**Stay tuned — validation is in progress and launch details are coming soon.**
+No unconfirmed or dry-run decision is presented as an on-chain trade.
+
+## Risk controls
+
+The mainnet worker treats every agent output as an untrusted proposal. Before signing, it:
+
+1. Verifies Robinhood Chain mainnet and the configured wallet.
+2. Resolves active Stock Token contracts from Robinhood's official registry.
+3. Pins the official Uniswap Universal Router for chain `4663`.
+4. Serializes all five agents through one transaction queue.
+5. Applies per-trade, daily, and lifetime wallet-wide budgets.
+6. Preserves a minimum ETH gas reserve.
+7. Rejects excessive gas, slippage, price impact, duplicates, and failed simulations.
+8. Requires persistent state and an explicit human-set live confirmation.
+
+Live mode will not start without the wallet key, Uniswap API key, persistent KV, and
+`MAINNET_LIVE_CONFIRM=I_UNDERSTAND_REAL_FUNDS`.
 
 ## Roadmap
 
-- [x] **Phase 1 — Open arena:** launch five distinct AI trading agents with equal starting capital,
-  live market anchors, transparent reasoning, and public performance metrics.
-- [x] **Phase 2 — Testnet infrastructure:** add persistent agent timers and on-chain trade logging
-  on Robinhood Chain testnet while keeping real capital out of the experimentation loop.
-- [ ] **Phase 3 — Find the champion:** run repeated seasons, compare return, Sharpe ratio,
-  drawdown, decision quality, and stability, then publish the selection methodology.
-- [ ] **Phase 4 — Validate the winner:** reproduce the winning strategy under new market regimes,
-  review the code and risk controls, and define strict limits for controlled real-capital trials.
-- [ ] **Phase 5 — Real bets on-chain:** deploy the validated agent in a monitored, limited-capital
-  environment on Robinhood Chain, subject to technical, legal, and risk review.
-- [ ] **Phase 6 — Open-source agent and coin:** publish the winning agent's code and documentation
-  for the community, then release the agent's coin and ecosystem details.
+- [x] **Open arena** — five distinct agents, equal capital, transparent reasoning, live market
+  anchors, and public risk metrics.
+- [x] **Mainnet safety layer** — shared-wallet queue, official token discovery, execution
+  validation, hard budgets, gas reserve, and public status API.
+- [ ] **Dry-run validation** — run every agent through quotes and simulations without sending
+  transactions; publish rejected and accepted plans separately from real trades.
+- [ ] **Cents-sized mainnet pilot** — fund the dedicated wallet, start below the hard limits, and
+  publish every confirmed transaction on `/verify`.
+- [ ] **Champion selection** — compare repeated seasons by return, Sharpe, drawdown, stability,
+  and execution quality.
+- [ ] **Open-source winning agent** — package the selected agent, methodology, and reproducible
+  evaluation for community use.
+- [ ] **Agent ecosystem launch** — publish token and governance details only after technical,
+  security, legal, and market-readiness review.
 
-> This is an experimental research project, not financial advice or a promise of returns. Roadmap
-> items may change as testing, security review, and applicable requirements evolve. AgentsInHood is
-> independent and is not affiliated with Robinhood Markets, Inc.
+## Architecture
 
----
+```text
+Browser / Vercel
+├── /api/agents/summary        reproducible arena leaderboard
+├── /api/agents/history        decisions and reasoning
+├── /api/mainnet/status        safe proxy to worker status
+└── /verify                    wallet, budgets, confirmed transaction links
 
-## How it stays live on Vercel (the interesting part)
-
-The original runs a stateful server on Railway with a background loop. To run the same idea on
-**serverless Vercel**, the engine is **fully deterministic**: the entire arena state is a pure
-function of `(fixed epoch, current time, seed)`, replayed on demand. So:
-
-- **No database, no background worker** — every serverless request recomputes identical state.
-  Two requests hitting two different lambdas return the same leaderboard.
-- **Perpetual seasons** — a fresh competition ($1,000 each) starts every 168 ticks, so the public
-  URL is always live.
-- **Real prices** — Yahoo Finance anchors each season's price levels (fetched through Vercel's
-  shared fetch cache so all instances agree) and drives a live stock-quote ticker.
-
-```
-Browser (Next.js App Router, client, Redux polling)
-  ├──►  GET /api/agents/summary   leaderboard · holdings · hourly history · live market
-  └──►  GET /api/agents/history   full trade log + AI reasoning per agent
-        │
-        ▼  (stateless, deterministic — replayed per request)
-  engine.ts  simulate(season, hour, anchors) → pure replay
-    ├─ prices.ts     seeded GBM path from real Yahoo Finance anchors
-    ├─ llm.ts        persona-driven reasoning (deterministic); real LLMs optional (see below)
-    ├─ market.ts     Yahoo Finance fetch, shared-cached, sticky, graceful fallback
-    └─ telegram.ts   optional: pushes new trades + reasoning to a Telegram chat (see below)
+Railway worker
+├── five independent decision timers
+├── live Yahoo Finance + ETH/USD inputs
+├── shared mainnet execution queue
+├── Robinhood Stock Token registry
+├── Uniswap quote + simulation + calldata
+└── persistent budget and idempotency state
 ```
 
-## Tech stack
-
-Next.js 14 (App Router) · React 18 · TypeScript · Redux Toolkit · Recharts · Emotion (SSR
-registry) · Framer Motion · Yahoo Finance · deployed on Vercel.
-
-## API contract
-
-`GET /api/agents/summary`
-```jsonc
-{
-  "agentData": { "gpt": { "id","name","model","color","avatar","tagline","walletAddress",
-    "portfolio": {"cash","totalValue","pnl","pnlPct","maxDrawdown","sharpeRatio","totalTrades","holdings":[…]},
-    "portfolioHistory":[{"hour","value","cash"}] }, … },
-  "tokenPrices": {…},          // arena (simulated) prices
-  "market": {…}, "marketLive": true,   // real CoinGecko spot prices
-  "season": 13359, "rankings": [ … ],
-  "competition": {"start","end","durationHours":168,"startingCapital":1000},
-  "live": true
-}
-```
-`GET /api/agents/history` → `{ "agentHistory": { "gpt": { "trades":[…], "reasoningLogs":[…] }, … } }`
-
-## Run locally
+## Run the website
 
 ```bash
 npm install
-npm run dev            # http://localhost:3000
+npm run dev
 ```
 
-### Real LLM reasoning (optional, local)
-
-The deployed public site uses the built-in deterministic reasoning (fast, always-live, consistent
-across serverless instances). To have the agents' latest reasoning generated by **real LLM APIs**,
-run locally with keys and the flag:
+The arena works without secrets. To connect `/verify` to the worker, set:
 
 ```env
-# .env.local
-ARENA_LIVE_LLM=true
-ANTHROPIC_API_KEY=   # Claude agent
-OPENAI_API_KEY=      # GPT agent
-GOOGLE_API_KEY=      # Gemini agent
-MINIMAX_API_KEY=     # MiniMax agent
-ARENA_TICK_SECONDS=7 # seconds per simulated hour
+MAINNET_WORKER_STATUS_URL=https://your-worker.example/mainnet/status
 ```
 
-Each agent without a key falls back to the deterministic generator, so it always runs.
-
-## Deploy
+## Run the worker safely
 
 ```bash
-vercel --prod        # already linked to the "alpha-arena" project
+cd worker
+npm install
+cp .env.example .env
+npm run dev
 ```
 
-Zero env vars required (CoinGecko is keyless). Redeploying is harmless — seasons are time-derived.
+Keep `MAINNET_MODE=dry-run` until quotes, budgets, KV persistence, wallet backup, deployment
+variables, and the exact funding transaction have been reviewed. See
+[`worker/README.md`](worker/README.md) for the launch checklist.
 
-## Project structure
+## Stack
 
-```
-src/
-  app/            layout · page · providers · registry · globals.css · api/agents/{summary,history}
-  engine/         engine.ts (deterministic replay) · llm.ts · prices.ts · market.ts · config.ts · types.ts
-  store/          Redux Toolkit slice + typed hooks
-  components/     Header · MarketTicker · Leaderboard · Trajectories · MeetTheAgents ·
-                  TradeActivity · AIReasoning · HowItWorks · ui primitives
-```
+Next.js 14 · React 18 · TypeScript · Redux Toolkit · Recharts · Emotion · ethers v6 · Robinhood
+Chain · Uniswap Trading API · Yahoo Finance · Railway · Vercel
+
+## Independent project
+
+AgentsInHood is an experimental research project, not financial advice or a promise of returns. It
+is independent and is not affiliated with or endorsed by Robinhood Markets, Uniswap Labs, or the
+AI providers referenced in the arena. On-chain assets are volatile and real funds can be lost.

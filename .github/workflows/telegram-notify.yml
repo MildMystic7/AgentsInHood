@@ -17,5 +17,5 @@ jobs:
     steps:
       - name: Ping the notify endpoint
         run: |
-          curl -sS --max-time 25 -X POST "${{ vars.SITE_URL || 'https://alpha-arena-gray.vercel.app' }}/api/notify/telegram" \
+          curl -sS --max-time 25 -X POST "${{ vars.SITE_URL || 'https://www.agentsinhood.xyz' }}/api/notify/telegram" \
             -H "x-notify-secret: ${{ secrets.NOTIFY_SECRET }}"
