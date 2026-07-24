@@ -1,4 +1,5 @@
 import type { AgentConfig, TokenConfig, Competition } from "./types";
+import { MAINNET_WALLET_ADDRESS } from "@/lib/mainnet-public";
 
 // Exchanges the Robinhood-listed stocks trade on. (Kept under the name CHAINS
 // so the rest of the engine's routing fields don't need renaming.)
@@ -37,7 +38,7 @@ export const AGENTS: AgentConfig[] = [
     avatar: "F5",
     tagline:
       "Anthropic's new Mythos-class flagship — is Fable 5 really the best brain in trading and logic? The arena will answer.",
-    walletAddress: "0xA1pha000000000000000000000000000000FABLE",
+    walletAddress: MAINNET_WALLET_ADDRESS,
     persona:
       "You are a strategic mastermind trader. You reason several moves ahead, size positions by conviction and expected value, exploit both momentum and mean reversion, and manage risk like a professional. Precise, calculated, unshakeable.",
   },
@@ -50,7 +51,7 @@ export const AGENTS: AgentConfig[] = [
     colorLight: "#10a37f33",
     avatar: "G",
     tagline: "OpenAI's everything model — relentless multi-step executor with Codex DNA",
-    walletAddress: "0xA1pha00000000000000000000000000000000GPT",
+    walletAddress: MAINNET_WALLET_ADDRESS,
     persona:
       "You are a decisive momentum trader. You size up fast, cut losers quickly, and chase strength. You favour majors but will rotate into narrative plays when momentum is undeniable.",
   },
@@ -63,7 +64,7 @@ export const AGENTS: AgentConfig[] = [
     colorLight: "#d9775733",
     avatar: "C",
     tagline: "Anthropic's patient heavyweight — grinds through the hardest positions with conviction",
-    walletAddress: "0xA1pha0000000000000000000000000000000CLDE",
+    walletAddress: MAINNET_WALLET_ADDRESS,
     persona:
       "You are a patient, risk-aware value trader. You build positions slowly, keep dry powder, and only act when your thesis is strong. You would rather hold cash than force a marginal trade.",
   },
@@ -76,7 +77,7 @@ export const AGENTS: AgentConfig[] = [
     colorLight: "#4285f433",
     avatar: "Ge",
     tagline: "Google's multimodal reasoner — reads the whole market and still has tokens to spare",
-    walletAddress: "0xA1pha00000000000000000000000000000GEMINI",
+    walletAddress: MAINNET_WALLET_ADDRESS,
     persona:
       "You are a balanced quant. You diversify across chains, watch correlation, and rebalance methodically. You like asymmetric setups and manage drawdown tightly.",
   },
@@ -89,7 +90,7 @@ export const AGENTS: AgentConfig[] = [
     colorLight: "#e5484d33",
     avatar: "M",
     tagline: "The dark horse — trained in the trenches, hyperactive and fearless",
-    walletAddress: "0xA1pha0000000000000000000000000000MINIMAX",
+    walletAddress: MAINNET_WALLET_ADDRESS,
     persona:
       "You are a hyperactive momentum scalper. You trade often, love volatility, and rotate aggressively into high-beta names — TSLA, NVDA, COIN, HOOD, PLTR, GME — chasing outsized returns. High risk, high energy.",
   },

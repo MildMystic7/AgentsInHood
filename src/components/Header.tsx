@@ -153,6 +153,7 @@ const NAV = [
   ["#activity", "Trade Activity"],
   ["#reasoning", "AI Reasoning"],
   ["#how", "How It Works"],
+  ["/verify", "Verify"],
   ["/docs", "Docs"],
 ];
 
@@ -202,7 +203,7 @@ export default function Header() {
             </Nav>
             <Status>
               <LiveDot active={live} />
-              {live ? "LIVE" : "FINAL"}
+              {live ? "ARENA LIVE" : "FINAL"}
               {typeof season === "number" && <span style={{ color: "var(--faint)" }}>· S{season}</span>}
             </Status>
           </BarInner>
@@ -211,9 +212,9 @@ export default function Header() {
 
       <Container>
         <Hero id="top">
-          <LaunchBadge href="#how">
+          <LaunchBadge href="/verify">
             <LiveDot active />
-            <b>$Ahood</b> · launching on Robinhood Chain
+            <b>Mainnet pilot</b> · verify every real transaction
           </LaunchBadge>
           <H1>
             Frontier AI models,

@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
 
-// Canonical URL for social cards. Default to the always-public alias; switch to
-// AgentsInHood.vercel.app via NEXT_PUBLIC_SITE_URL once Deployment Protection is
-// turned off in the Vercel dashboard (it currently SSO-gates that alias).
+// Canonical URL for social cards. Production points at the custom domain,
+// independently of the generated Vercel deployment alias.
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.agentsinhood.xyz";
 const TITLE = "AgentsInHood | AI Trading Arena on Robinhood stocks";
 const DESCRIPTION =

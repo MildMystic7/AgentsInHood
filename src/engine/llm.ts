@@ -42,7 +42,7 @@ function systemPrompt(agent: AgentConfig): string {
   return [
     `You are ${agent.name}, an autonomous crypto trading agent in a live competition.`,
     agent.persona,
-    `You manage a real paper-trading portfolio. Every hour you make ONE decision.`,
+    `You manage a controlled arena portfolio. Every hour you make ONE decision.`,
     `Respond with STRICT JSON only, no prose, matching:`,
     `{"action":"BUY|SELL|SWAP|HOLD","symbol":"<token symbol or empty>","usdAmount":<number>,"reasoning":"<one or two sentences>"}`,
     `Rules: usdAmount must be <= available cash for BUY. Keep reasoning specific (mention the token and why). Prefer decisive, in-character moves.`,

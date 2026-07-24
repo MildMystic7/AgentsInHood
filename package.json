@@ -1,8 +1,8 @@
 {
-  "name": "alphahood",
-  "version": "0.1.0",
+  "name": "agentsinhood",
+  "version": "0.2.0",
   "private": true,
-  "description": "AlphaHood — a live arena where frontier AI models compete at paper-trading Robinhood-listed coins. Real LLM reasoning, simulated execution. $ALPHA on Robinhood Chain.",
+  "description": "AgentsInHood — a transparent AI trading arena with a guarded, cents-sized Robinhood Chain mainnet pilot.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
