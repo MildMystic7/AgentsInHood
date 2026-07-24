@@ -12,7 +12,7 @@ export const ROBINHOOD_CHAIN_ID = 4663;
 export const ROBINHOOD_RPC_URL =
   process.env.ROBINHOOD_MAINNET_RPC_URL || "https://rpc.mainnet.chain.robinhood.com";
 export const ROBINHOOD_EXPLORER_URL = "https://robinhoodchain.blockscout.com";
-export const NATIVE_TOKEN = "0x0000000000000000000000000000000000000000";
+export const USDG_TOKEN = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
 export const UNISWAP_UNIVERSAL_ROUTER = "0x8876789976decbfcbbbe364623c63652db8c0904";
 
 type MainnetMode = "off" | "dry-run" | "live";
@@ -358,32 +358,25 @@ async function assertTransactionBudget(
   }
 }
 
-async function amountForTrade(
+async function desiredInputAmount(
   action: TradeAction,
   usdCents: number,
   stockPriceUsd: number,
-  ethPriceUsd: number,
   tokenAddress: string,
   multiplier: number,
   provider: JsonRpcProvider,
-  walletAddress: string,
 ): Promise<string> {
   const usd = usdCents / 100;
   if (action === "BUY") {
-    if (!Number.isFinite(ethPriceUsd) || ethPriceUsd <= 0) throw new Error("ETH/USD price is unavailable");
-    return parseEther((usd / ethPriceUsd).toFixed(18)).toString();
+    const usdg = new Contract(USDG_TOKEN, ERC20_ABI, provider);
+    const decimals = Number(await usdg.decimals());
+    return parseUnits(usd.toFixed(decimals), decimals).toString();
   }
   if (!Number.isFinite(stockPriceUsd) || stockPriceUsd <= 0) throw new Error("Stock price is unavailable");
   const token = new Contract(tokenAddress, ERC20_ABI, provider);
-  const [decimals, balance] = (await Promise.all([
-    token.decimals(),
-    token.balanceOf(walletAddress),
-  ])) as [bigint, bigint];
+  const decimals = Number(await token.decimals());
   const desiredTokens = usd / (stockPriceUsd * multiplier);
-  const desired = parseUnits(desiredTokens.toFixed(Number(decimals)), Number(decimals));
-  const amount = desired < balance ? desired : balance;
-  if (amount <= 0n) throw new Error(`No ${action === "SELL" ? symbolForError(tokenAddress) : ""} balance to sell`);
-  return amount.toString();
+  return parseUnits(desiredTokens.toFixed(decimals), decimals).toString();
 }
 
 function symbolForError(tokenAddress: string): string {
@@ -437,6 +430,67 @@ async function maybeApprove(
   return receipt.hash;
 }
 
+interface PreparedQuote {
+  provider: JsonRpcProvider;
+  tokenIn: string;
+  tokenOut: string;
+  amount: string;
+  quoteResponse: QuoteResponse;
+}
+
+async function prepareQuote(
+  args: {
+    action: TradeAction;
+    symbol: string;
+    usdCents: number;
+    stockPriceUsd: number;
+  },
+  walletAddress: string,
+): Promise<PreparedQuote> {
+  const provider = new JsonRpcProvider(ROBINHOOD_RPC_URL, {
+    chainId: ROBINHOOD_CHAIN_ID,
+    name: "robinhood-mainnet",
+  });
+  const network = await provider.getNetwork();
+  if (Number(network.chainId) !== ROBINHOOD_CHAIN_ID) throw new Error("RPC returned the wrong chain");
+
+  const { address: stockToken, multiplier } = await resolveStockToken(args.symbol);
+  const tokenIn = args.action === "BUY" ? USDG_TOKEN : stockToken;
+  const tokenOut = args.action === "BUY" ? stockToken : USDG_TOKEN;
+  const amount = await desiredInputAmount(
+    args.action,
+    args.usdCents,
+    args.stockPriceUsd,
+    stockToken,
+    multiplier,
+    provider,
+  );
+  const quoteResponse = await uniswapRequest<QuoteResponse>("/quote", {
+    type: "EXACT_INPUT",
+    tokenInChainId: ROBINHOOD_CHAIN_ID,
+    tokenOutChainId: ROBINHOOD_CHAIN_ID,
+    tokenIn,
+    tokenOut,
+    amount,
+    swapper: walletAddress,
+    slippageTolerance: envNumber("MAINNET_SLIPPAGE_PERCENT", 0.5),
+    routingPreference: "BEST_PRICE",
+  });
+  validateQuote(quoteResponse, walletAddress, tokenIn, tokenOut);
+  return { provider, tokenIn, tokenOut, amount, quoteResponse };
+}
+
+async function validateDryRunTrade(args: {
+  action: TradeAction;
+  symbol: string;
+  usdCents: number;
+  stockPriceUsd: number;
+}): Promise<string> {
+  const walletAddress = mainnetWalletAddress();
+  if (!walletAddress) throw new Error("MAINNET_WALLET_ADDRESS is not configured");
+  return (await prepareQuote(args, walletAddress)).quoteResponse.routing;
+}
+
 async function executeLiveTrade(args: {
   action: TradeAction;
   symbol: string;
@@ -446,52 +500,23 @@ async function executeLiveTrade(args: {
 }): Promise<{ txHash: string; approvalTxHash?: string }> {
   const baseWallet = configuredWallet();
   if (!baseWallet) throw new Error("MAINNET_PRIVATE_KEY is not configured");
-  const provider = new JsonRpcProvider(ROBINHOOD_RPC_URL, {
-    chainId: ROBINHOOD_CHAIN_ID,
-    name: "robinhood-mainnet",
-  });
+  const prepared = await prepareQuote(args, baseWallet.address);
+  const { provider, tokenIn, tokenOut, amount, quoteResponse } = prepared;
   const wallet = baseWallet.connect(provider);
-  const network = await provider.getNetwork();
-  if (Number(network.chainId) !== ROBINHOOD_CHAIN_ID) throw new Error("RPC returned the wrong chain");
 
-  const { address: stockToken, multiplier } = await resolveStockToken(args.symbol);
-  const tokenIn = args.action === "BUY" ? NATIVE_TOKEN : stockToken;
-  const tokenOut = args.action === "BUY" ? stockToken : NATIVE_TOKEN;
-  const amount = await amountForTrade(
-    args.action,
-    args.usdCents,
-    args.stockPriceUsd,
-    args.ethPriceUsd,
-    stockToken,
-    multiplier,
-    provider,
-    wallet.address,
-  );
+  const inputToken = new Contract(tokenIn, ERC20_ABI, provider);
+  const inputBalance = (await inputToken.balanceOf(wallet.address)) as bigint;
+  if (inputBalance < BigInt(amount)) {
+    throw new Error(`Insufficient ${args.action === "BUY" ? "USDG" : symbolForError(tokenIn)} balance`);
+  }
 
   const balanceBefore = await provider.getBalance(wallet.address);
   const reserve = parseEther(process.env.MAINNET_MIN_GAS_RESERVE_ETH || "0.001");
-  if (args.action === "BUY" && balanceBefore - BigInt(amount) < reserve) {
+  if (balanceBefore < reserve) {
     throw new Error(`Gas reserve protected; wallet has ${formatEther(balanceBefore)} ETH`);
   }
 
-  let approvalTxHash: string | undefined;
-  if (args.action === "SELL") {
-    approvalTxHash = await maybeApprove(wallet, tokenIn, tokenOut, amount, args.ethPriceUsd);
-  }
-
-  const quoteResponse = await uniswapRequest<QuoteResponse>("/quote", {
-    type: "EXACT_INPUT",
-    tokenInChainId: ROBINHOOD_CHAIN_ID,
-    tokenOutChainId: ROBINHOOD_CHAIN_ID,
-    tokenIn,
-    tokenOut,
-    amount,
-    swapper: wallet.address,
-    slippageTolerance: envNumber("MAINNET_SLIPPAGE_PERCENT", 0.5),
-    routingPreference: "FASTEST",
-    protocols: ["V4", "V3", "V2"],
-  });
-  validateQuote(quoteResponse, wallet.address, tokenIn, tokenOut);
+  const approvalTxHash = await maybeApprove(wallet, tokenIn, tokenOut, amount, args.ethPriceUsd);
 
   let signature: string | undefined;
   if (quoteResponse.permitData) {
@@ -514,8 +539,8 @@ async function executeLiveTrade(args: {
   if (swapResponse.swap.from && swapResponse.swap.from.toLowerCase() !== wallet.address.toLowerCase()) {
     throw new Error("Swap transaction sender does not match the configured wallet");
   }
-  if (args.action === "BUY" && (request.value || 0n) > BigInt(amount)) {
-    throw new Error("Swap transaction attempts to spend more ETH than quoted");
+  if ((request.value || 0n) > 0n) {
+    throw new Error("USDG/stock-token swap unexpectedly requests native ETH value");
   }
   await assertTransactionBudget(provider, wallet.address, request, args.ethPriceUsd);
   const tx = await wallet.sendTransaction(request);
@@ -576,8 +601,22 @@ export async function executeMainnetTrade(args: {
     }
 
     if (mode === "dry-run") {
-      await saveMainnetState(state);
-      return { mode, status: "planned", reason: "validated by local risk controls; no transaction sent" };
+      try {
+        const routing = await validateDryRunTrade({
+          action: args.action,
+          symbol: args.symbol,
+          usdCents,
+          stockPriceUsd: args.stockPriceUsd,
+        });
+        record.reason = `Uniswap ${routing} quote validated; no transaction sent`;
+        await saveMainnetState(state);
+        return { mode, status: "planned", reason: record.reason };
+      } catch (error) {
+        record.status = "rejected";
+        record.reason = `Dry-run quote rejected: ${(error as Error).message.slice(0, 240)}`;
+        await saveMainnetState(state);
+        return { mode, status: "rejected", reason: record.reason };
+      }
     }
 
     // Budget is reserved only when the executor is actually allowed to submit

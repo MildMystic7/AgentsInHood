@@ -13,6 +13,7 @@ present.
 - $10 daily circuit breaker.
 - $2 initial lifetime pilot cap.
 - Minimum `0.001 ETH` gas reserve.
+- USDG is the settlement asset for Stock Token buys and sells; ETH is used only for gas.
 - Official Robinhood Stock Token registry lookup on every cached asset refresh.
 - Official Uniswap Universal Router pinned for chain `4663`.
 - Quote simulation, recipient, token, chain, gas, price impact, and slippage checks.
@@ -41,7 +42,7 @@ MAINNET_MODE=live
 ```
 
 - `off`: agent portfolios can run locally; no mainnet plan is accepted.
-- `dry-run`: proposals pass budget checks but no transaction is sent.
+- `dry-run`: proposals must pass budgets, official-token resolution, and a real Uniswap quote; no transaction is sent.
 - `live`: real approvals and swaps may be signed.
 
 Live mode additionally requires:

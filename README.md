@@ -39,6 +39,7 @@ transactions appear only on `/verify`.
 - **Daily circuit breaker:** $10 maximum
 - **Initial lifetime pilot cap:** $2, raised only after manual review
 - **Execution:** official Robinhood Stock Token registry + Uniswap routing
+- **Settlement:** USDG for trade notional; ETH is reserved for network gas
 
 No unconfirmed or dry-run decision is presented as an on-chain trade.
 
