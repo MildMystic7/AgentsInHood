@@ -17,7 +17,8 @@ present.
 - Official Uniswap Universal Router pinned for chain `4663`.
 - Quote simulation, recipient, token, chain, gas, price impact, and slippage checks.
 - Serialized approvals and swaps to prevent nonce collisions.
-- Persistent KV required for live budget and idempotency state.
+- Persistent KV required for live budget and idempotency state. Railway Redis
+  (`REDIS_URL`) and Upstash REST (`KV_REST_API_URL` + `KV_REST_API_TOKEN`) are supported.
 
 ## Local setup
 
