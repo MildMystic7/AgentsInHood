@@ -106,7 +106,7 @@ function simulate(season: number, uptoHour: number, anchors: Record<string, numb
     for (const a of agents) {
       const ctx = contextFor(a, prices, momentum, h);
       const d = mockDecide(a.cfg, ctx, rng);
-      applyDecision(a, d, prices, h, ts);
+      applyDecision(a, d, prices, h, ts, ctx);
     }
     for (const a of agents) snapshot(a, prices, h);
   }
@@ -137,7 +137,48 @@ function contextFor(a: EngineAgent, prices: PriceFeed, momentum: Record<string, 
 }
 
 // ── Trade application ────────────────────────────────────────────────────────
-function applyDecision(a: EngineAgent, d: Decision, prices: PriceFeed, hour: number, ts: number): void {
+function decisionDetails(
+  d: Decision,
+  ctx: DecisionContext,
+  symbol: string | undefined,
+  logTrade: string,
+): NonNullable<ReasoningLog["details"]> {
+  const momentum = symbol ? ctx.momentum[symbol] ?? 0 : null;
+  const price = symbol ? ctx.prices[symbol] ?? 0 : null;
+  const holding = symbol ? ctx.holdings.find((item) => item.symbol === symbol) : undefined;
+  const holdingWeight =
+    holding && ctx.totalValue > 0 ? (holding.value / ctx.totalValue) * 100 : 0;
+  const cashWeight = ctx.totalValue > 0 ? (ctx.cashUSDC / ctx.totalValue) * 100 : 0;
+
+  const marketSignal =
+    symbol && momentum !== null && price !== null
+      ? `${symbol} was ${momentum >= 0 ? "+" : ""}${momentum.toFixed(2)}% across the model's recent lookback, with a $${price.toFixed(2)} reference price.`
+      : "No single stock cleared the model's action threshold during this cycle.";
+
+  const portfolioContext = symbol
+    ? `Before the decision, ${symbol} represented ${holdingWeight.toFixed(1)}% of the arena book and ${cashWeight.toFixed(1)}% remained unallocated. Executed result: ${logTrade}.`
+    : `${cashWeight.toFixed(1)}% of the arena book remained unallocated. Executed result: ${logTrade}.`;
+
+  const riskDiscipline =
+    d.action === "BUY"
+      ? "Position size was capped by the agent's available allocation; the thesis is reassessed on the next cycle."
+      : d.action === "SELL"
+        ? "The agent reduced exposure after its exit condition was met, rather than waiting for the loss or reversal to deepen."
+        : d.action === "SWAP"
+          ? "Capital was rotated rather than added, keeping the normalized arena budget unchanged."
+          : "The agent preserved optionality instead of forcing a trade without sufficient evidence.";
+
+  return { marketSignal, portfolioContext, riskDiscipline };
+}
+
+function applyDecision(
+  a: EngineAgent,
+  d: Decision,
+  prices: PriceFeed,
+  hour: number,
+  ts: number,
+  ctx: DecisionContext,
+): void {
   const symbol = d.symbol && tokenBySymbol[d.symbol] && d.symbol !== "USD" ? d.symbol : undefined;
   const amount = d.usdAmount ?? 0;
   let logTrade = "No trade this cycle";
@@ -171,7 +212,13 @@ function applyDecision(a: EngineAgent, d: Decision, prices: PriceFeed, hour: num
     }
   }
 
-  a.reasoningLogs.push({ hour, timestamp: ts, text: d.reasoning, trade: logTrade });
+  a.reasoningLogs.push({
+    hour,
+    timestamp: ts,
+    text: d.reasoning,
+    trade: logTrade,
+    details: decisionDetails(d, ctx, symbol, logTrade),
+  });
 }
 
 function buy(a: EngineAgent, symbol: string, usd: number, prices: PriceFeed, hour: number, ts: number, reasoning: string): void {

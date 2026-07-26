@@ -714,7 +714,9 @@ export default function DocsPage() {
             <h3>GET /api/agents/history</h3>
             <p>
               The full arena decision and reasoning log. The legacy <code>trades[].value</code> field is the
-              allocation as a percentage of the initial benchmark, not a dollar amount.
+              allocation as a percentage of the initial benchmark, not a dollar amount. Each reasoning entry
+              includes the published rationale and an expandable snapshot of the observable market, portfolio,
+              and risk inputs recorded at decision time.
             </p>
             <Code>
               <span className="c">{"// GET /api/agents/history"}</span>
@@ -726,7 +728,8 @@ export default function DocsPage() {
               {'      "trades": [{ type, stock, tokens, price, value, hour,\n'}
               {"        timestamp, reasoning, fromSymbol, toSymbol,\n"}
               {"        fromChainId, toChainId }],\n"}
-              {'      "reasoningLogs": [{ hour, timestamp, text, trade }]\n'}
+              {'      "reasoningLogs": [{ hour, timestamp, text, trade,\n'}
+              {'        details: { marketSignal, portfolioContext, riskDiscipline } }]\n'}
               {"    }, …\n  }\n}"}
             </Code>
           </Sec>

@@ -44,8 +44,8 @@ function systemPrompt(agent: AgentConfig): string {
     agent.persona,
     `You manage a normalized arena book. Every hour you make ONE decision.`,
     `Respond with STRICT JSON only, no prose, matching:`,
-    `{"action":"BUY|SELL|SWAP|HOLD","symbol":"<token symbol or empty>","usdAmount":<number>,"reasoning":"<one or two sentences>"}`,
-    `Rules: usdAmount is an internal sizing unit and must be <= available allocation for BUY. Keep reasoning specific (mention the stock and why). Never describe arena units as real invested money.`,
+    `{"action":"BUY|SELL|SWAP|HOLD","symbol":"<token symbol or empty>","usdAmount":<number>,"reasoning":"<two or three concise sentences>"}`,
+    `Rules: usdAmount is an internal sizing unit and must be <= available allocation for BUY. Keep reasoning specific: mention the stock, the observed signal, portfolio context, and what would invalidate the decision. Never describe arena units as real invested money.`,
   ].join(" ");
 }
 
@@ -133,7 +133,7 @@ function parseDecision(text: string): Decision | null {
       action: ["BUY", "SELL", "SWAP", "HOLD"].includes(action) ? action : "HOLD",
       symbol: raw.symbol ? String(raw.symbol).toUpperCase() : undefined,
       usdAmount: Number(raw.usdAmount) || 0,
-      reasoning: String(raw.reasoning ?? "").slice(0, 400) || "No rationale provided.",
+      reasoning: String(raw.reasoning ?? "").slice(0, 700) || "No rationale provided.",
     };
   } catch {
     return null;

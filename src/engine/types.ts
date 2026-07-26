@@ -61,6 +61,11 @@ export interface ReasoningLog {
   timestamp: number;
   text: string;
   trade: string;
+  details?: {
+    marketSignal: string;
+    portfolioContext: string;
+    riskDiscipline: string;
+  };
 }
 
 export interface Agent {
