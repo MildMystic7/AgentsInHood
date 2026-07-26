@@ -16,7 +16,7 @@ present.
 - USDG is the settlement asset for Stock Token buys and sells; ETH is used only for gas.
 - Official Robinhood Stock Token registry lookup on every cached asset refresh.
 - Official Uniswap Universal Router pinned for chain `4663`.
-- Quote simulation, recipient, token, chain, gas, 10% maximum price impact, and 0.5% slippage checks.
+- Quote simulation, recipient, token, chain, gas, 10% maximum price impact, and 10% slippage checks.
 - Serialized approvals and swaps to prevent nonce collisions.
 - Persistent KV required for live budget and idempotency state. Railway Redis
   (`REDIS_URL`) and Upstash REST (`KV_REST_API_URL` + `KV_REST_API_TOKEN`) are supported.
@@ -62,6 +62,22 @@ before broadcasting and are not refunded automatically after a failed attempt.
 
 Telegram credentials belong only to this Railway worker. Dry-run plans never trigger messages;
 only confirmed mainnet executions with Blockscout proof are published.
+
+## One-hour monitored smoke test
+
+`npm run one-hour-live-test` is a deliberately constrained operational test, not an autonomous
+agent competition. It can submit at most six fixed `$0.01` AAPL buys over one hour, separated by
+eleven minutes. Every confirmed trade uses the normal budgets, gas reserve, Redis idempotency, and
+Telegram proof path.
+
+The runner refuses live execution unless both confirmations are present:
+
+```env
+MAINNET_LIVE_CONFIRM=I_UNDERSTAND_REAL_FUNDS
+ONE_HOUR_TEST_CONFIRM=I_UNDERSTAND_SIX_REAL_TRADES
+```
+
+Set `ONE_HOUR_TEST_PREFLIGHT_ONLY=true` to validate a fresh quote without signing or broadcasting.
 
 Do not put a private key in Git, chat, screenshots, logs, Vercel public variables, or the website.
 Use a dedicated Railway secret and keep an offline backup.

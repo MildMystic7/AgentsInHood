@@ -38,7 +38,7 @@ transactions appear only on `/verify`.
 - **Trade size:** $0.01–$0.05
 - **Daily circuit breaker:** $10 maximum
 - **Initial lifetime pilot cap:** $1.75, raised only after manual review
-- **Maximum price impact:** 10%; slippage tolerance remains 0.5%
+- **Maximum price impact:** 10%; slippage tolerance: 10%
 - **Execution:** official Robinhood Stock Token registry + Uniswap routing
 - **Settlement:** USDG for trade notional; ETH is reserved for network gas
 

@@ -207,7 +207,7 @@ export default function VerifyPage() {
   const confirmedTrades = status.trades.filter((trade) => trade.status === "confirmed" && trade.txHash);
   const positions = status.positions ?? [];
   const maxPriceImpactPercent = status.maxPriceImpactPercent ?? 10;
-  const slippagePercent = status.slippagePercent ?? 0.5;
+  const slippagePercent = status.slippagePercent ?? 10;
   const hasConfirmedMainnetTrade = confirmedTrades.length > 0;
   const label =
     status.mode === "live" && status.connected

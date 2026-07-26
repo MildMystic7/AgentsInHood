@@ -205,7 +205,7 @@ export function assertMainnetConfiguration(): void {
   const totalGasMax = envInt("MAINNET_TOTAL_GAS_BUDGET_USD_CENTS", 100);
   const cooldownSeconds = envInt("MAINNET_MIN_SECONDS_BETWEEN_TRADES", 600);
   const maxPriceImpactPercent = envNumber("MAINNET_MAX_PRICE_IMPACT_PERCENT", 10);
-  const slippagePercent = envNumber("MAINNET_SLIPPAGE_PERCENT", 0.5);
+  const slippagePercent = envNumber("MAINNET_SLIPPAGE_PERCENT", 10);
 
   if (tradeMax < 1 || tradeMax > 25) {
     throw new Error("MAINNET_MAX_TRADE_USD_CENTS must be between 1 and 25");
@@ -231,8 +231,8 @@ export function assertMainnetConfiguration(): void {
   if (maxPriceImpactPercent < 0.01 || maxPriceImpactPercent > 10) {
     throw new Error("MAINNET_MAX_PRICE_IMPACT_PERCENT must be between 0.01 and 10");
   }
-  if (slippagePercent < 0.01 || slippagePercent > 5) {
-    throw new Error("MAINNET_SLIPPAGE_PERCENT must be between 0.01 and 5");
+  if (slippagePercent < 0.01 || slippagePercent > 10) {
+    throw new Error("MAINNET_SLIPPAGE_PERCENT must be between 0.01 and 10");
   }
   if (mode === "live") {
     if (process.env.MAINNET_LIVE_CONFIRM !== "I_UNDERSTAND_REAL_FUNDS") {
@@ -525,7 +525,7 @@ async function prepareQuote(
     tokenOut,
     amount,
     swapper: walletAddress,
-    slippageTolerance: envNumber("MAINNET_SLIPPAGE_PERCENT", 0.5),
+    slippageTolerance: envNumber("MAINNET_SLIPPAGE_PERCENT", 10),
     routingPreference: "BEST_PRICE",
   });
   validateQuote(quoteResponse, walletAddress, tokenIn, tokenOut);
@@ -670,13 +670,8 @@ export async function executeMainnetTrade(args: {
       reason: rejection || args.reasoning.slice(0, 280),
       createdAt: new Date().toISOString(),
     };
-    state.trades.push(record);
-    if (rejection) {
-      await saveMainnetState(state);
-      return { mode, status: "rejected", reason: rejection };
-    }
-
     if (mode === "dry-run") {
+      if (rejection) return { mode, status: "rejected", reason: rejection };
       try {
         const routing = await validateDryRunTrade({
           action: args.action,
@@ -685,14 +680,20 @@ export async function executeMainnetTrade(args: {
           stockPriceUsd: args.stockPriceUsd,
         });
         record.reason = `Uniswap ${routing} quote validated; no transaction sent`;
-        await saveMainnetState(state);
         return { mode, status: "planned", reason: record.reason };
       } catch (error) {
         record.status = "rejected";
         record.reason = `Dry-run quote rejected: ${(error as Error).message.slice(0, 240)}`;
-        await saveMainnetState(state);
         return { mode, status: "rejected", reason: record.reason };
       }
+    }
+
+    // Dry-run quotes are intentionally read-only. This prevents a persistent
+    // simulator from overwriting the live executor's Redis state.
+    state.trades.push(record);
+    if (rejection) {
+      await saveMainnetState(state);
+      return { mode, status: "rejected", reason: rejection };
     }
 
     // Budget is reserved only when the executor is actually allowed to submit
@@ -836,7 +837,7 @@ export async function getPublicMainnetStatus(): Promise<{
     totalGasReservedUsd: state.totalGasReservedMicros / 1_000_000,
     minSecondsBetweenTrades: envInt("MAINNET_MIN_SECONDS_BETWEEN_TRADES", 600),
     maxPriceImpactPercent: envNumber("MAINNET_MAX_PRICE_IMPACT_PERCENT", 10),
-    slippagePercent: envNumber("MAINNET_SLIPPAGE_PERCENT", 0.5),
+    slippagePercent: envNumber("MAINNET_SLIPPAGE_PERCENT", 10),
     trades: [...state.trades].reverse().slice(0, 50),
   };
 }

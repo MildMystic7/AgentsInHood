@@ -5,6 +5,7 @@
   "description": "Guarded mainnet execution worker for the AgentsInHood AI trading pilot on Robinhood Chain.",
   "scripts": {
     "new-mainnet-wallet": "node scripts/new-mainnet-wallet.js",
+    "one-hour-live-test": "tsx scripts/one-hour-live-test.ts",
     "dev": "tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js"

@@ -61,7 +61,7 @@ export function fallbackMainnetStatus(): PublicMainnetStatus {
     totalGasReservedUsd: 0,
     minSecondsBetweenTrades: 600,
     maxPriceImpactPercent: 10,
-    slippagePercent: 0.5,
+    slippagePercent: 10,
     trades: [],
     connected: false,
   };
