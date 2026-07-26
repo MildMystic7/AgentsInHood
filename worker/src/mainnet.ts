@@ -3,6 +3,7 @@ import {
   JsonRpcProvider,
   Wallet,
   formatEther,
+  formatUnits,
   parseEther,
   parseUnits,
 } from "ethers";
@@ -203,6 +204,8 @@ export function assertMainnetConfiguration(): void {
   const dailyGasMax = envInt("MAINNET_DAILY_GAS_BUDGET_USD_CENTS", 50);
   const totalGasMax = envInt("MAINNET_TOTAL_GAS_BUDGET_USD_CENTS", 100);
   const cooldownSeconds = envInt("MAINNET_MIN_SECONDS_BETWEEN_TRADES", 600);
+  const maxPriceImpactPercent = envNumber("MAINNET_MAX_PRICE_IMPACT_PERCENT", 10);
+  const slippagePercent = envNumber("MAINNET_SLIPPAGE_PERCENT", 0.5);
 
   if (tradeMax < 1 || tradeMax > 25) {
     throw new Error("MAINNET_MAX_TRADE_USD_CENTS must be between 1 and 25");
@@ -224,6 +227,12 @@ export function assertMainnetConfiguration(): void {
   }
   if (cooldownSeconds < 60 || cooldownSeconds > 3600) {
     throw new Error("MAINNET_MIN_SECONDS_BETWEEN_TRADES must be between 60 and 3600");
+  }
+  if (maxPriceImpactPercent < 0.01 || maxPriceImpactPercent > 10) {
+    throw new Error("MAINNET_MAX_PRICE_IMPACT_PERCENT must be between 0.01 and 10");
+  }
+  if (slippagePercent < 0.01 || slippagePercent > 5) {
+    throw new Error("MAINNET_SLIPPAGE_PERCENT must be between 0.01 and 5");
   }
   if (mode === "live") {
     if (process.env.MAINNET_LIVE_CONFIRM !== "I_UNDERSTAND_REAL_FUNDS") {
@@ -317,7 +326,7 @@ function validateQuote(
     throw new Error(`Quote simulation failed: ${quote.txFailureReasons!.join(", ")}`);
   }
   const impactPercent = Number(quote.priceImpact || 0);
-  const maxImpactPercent = envNumber("MAINNET_MAX_PRICE_IMPACT_PERCENT", 1);
+  const maxImpactPercent = envNumber("MAINNET_MAX_PRICE_IMPACT_PERCENT", 10);
   if (!Number.isFinite(impactPercent) || impactPercent > maxImpactPercent) {
     throw new Error(`Price impact ${impactPercent}% exceeds ${maxImpactPercent}%`);
   }
@@ -740,6 +749,8 @@ export async function getPublicMainnetStatus(): Promise<{
   mode: MainnetMode;
   walletAddress: string | null;
   walletBalanceEth: string | null;
+  walletBalanceUsdg: string | null;
+  positions: { symbol: string; tokenAddress: string; balance: string }[];
   dailyBudgetUsd: number;
   dailyReservedUsd: number;
   dailySpentUsd: number;
@@ -751,11 +762,15 @@ export async function getPublicMainnetStatus(): Promise<{
   totalGasBudgetUsd: number;
   totalGasReservedUsd: number;
   minSecondsBetweenTrades: number;
+  maxPriceImpactPercent: number;
+  slippagePercent: number;
   trades: MainnetTradeRecord[];
 }> {
   const state = await loadMainnetState();
   const walletAddress = mainnetWalletAddress();
   let walletBalanceEth: string | null = null;
+  let walletBalanceUsdg: string | null = null;
+  const positions: { symbol: string; tokenAddress: string; balance: string }[] = [];
   if (walletAddress) {
     try {
       const provider = new JsonRpcProvider(ROBINHOOD_RPC_URL, {
@@ -763,8 +778,42 @@ export async function getPublicMainnetStatus(): Promise<{
         name: "robinhood-mainnet",
       });
       walletBalanceEth = formatEther(await provider.getBalance(walletAddress));
+      const usdg = new Contract(USDG_TOKEN, ERC20_ABI, provider);
+      const [usdgBalance, usdgDecimals] = (await Promise.all([
+        usdg.balanceOf(walletAddress),
+        usdg.decimals(),
+      ])) as [bigint, bigint];
+      walletBalanceUsdg = formatUnits(usdgBalance, Number(usdgDecimals));
+
+      const confirmedSymbols = [
+        ...new Set(
+          state.trades
+            .filter((trade) => trade.status === "confirmed" && trade.txHash)
+            .map((trade) => trade.symbol.toUpperCase()),
+        ),
+      ];
+      for (const symbol of confirmedSymbols) {
+        try {
+          const { address } = await resolveStockToken(symbol);
+          const token = new Contract(address, ERC20_ABI, provider);
+          const [balance, decimals] = (await Promise.all([
+            token.balanceOf(walletAddress),
+            token.decimals(),
+          ])) as [bigint, bigint];
+          if (balance > 0n) {
+            positions.push({
+              symbol,
+              tokenAddress: address,
+              balance: formatUnits(balance, Number(decimals)),
+            });
+          }
+        } catch {
+          // A balance lookup must never make the whole public status unavailable.
+        }
+      }
     } catch {
       walletBalanceEth = null;
+      walletBalanceUsdg = null;
     }
   }
   return {
@@ -773,6 +822,8 @@ export async function getPublicMainnetStatus(): Promise<{
     mode: mainnetMode(),
     walletAddress,
     walletBalanceEth,
+    walletBalanceUsdg,
+    positions,
     dailyBudgetUsd: envInt("MAINNET_DAILY_BUDGET_USD_CENTS", 1000) / 100,
     dailyReservedUsd: state.dayReservedCents / 100,
     dailySpentUsd: state.dayConfirmedCents / 100,
@@ -784,6 +835,8 @@ export async function getPublicMainnetStatus(): Promise<{
     totalGasBudgetUsd: envInt("MAINNET_TOTAL_GAS_BUDGET_USD_CENTS", 100) / 100,
     totalGasReservedUsd: state.totalGasReservedMicros / 1_000_000,
     minSecondsBetweenTrades: envInt("MAINNET_MIN_SECONDS_BETWEEN_TRADES", 600),
+    maxPriceImpactPercent: envNumber("MAINNET_MAX_PRICE_IMPACT_PERCENT", 10),
+    slippagePercent: envNumber("MAINNET_SLIPPAGE_PERCENT", 0.5),
     trades: [...state.trades].reverse().slice(0, 50),
   };
 }

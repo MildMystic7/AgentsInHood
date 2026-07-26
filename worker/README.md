@@ -11,12 +11,12 @@ present.
 - One dedicated wallet for all five agents.
 - $0.01–$0.05 per proposed trade.
 - $10 daily circuit breaker.
-- $2 initial lifetime pilot cap.
+- $1.75 initial lifetime pilot cap.
 - Minimum `0.001 ETH` gas reserve.
 - USDG is the settlement asset for Stock Token buys and sells; ETH is used only for gas.
 - Official Robinhood Stock Token registry lookup on every cached asset refresh.
 - Official Uniswap Universal Router pinned for chain `4663`.
-- Quote simulation, recipient, token, chain, gas, price impact, and slippage checks.
+- Quote simulation, recipient, token, chain, gas, 10% maximum price impact, and 0.5% slippage checks.
 - Serialized approvals and swaps to prevent nonce collisions.
 - Persistent KV required for live budget and idempotency state. Railway Redis
   (`REDIS_URL`) and Upstash REST (`KV_REST_API_URL` + `KV_REST_API_TOKEN`) are supported.
@@ -60,6 +60,9 @@ most 5 cents of gas per transaction, 50 cents per day, and $1 over the entire pi
 cooldown allows no more than one live attempt every 10 minutes. Conservative reservations are made
 before broadcasting and are not refunded automatically after a failed attempt.
 
+Telegram credentials belong only to this Railway worker. Dry-run plans never trigger messages;
+only confirmed mainnet executions with Blockscout proof are published.
+
 Do not put a private key in Git, chat, screenshots, logs, Vercel public variables, or the website.
 Use a dedicated Railway secret and keep an offline backup.
 
@@ -83,4 +86,4 @@ private key or Uniswap API key.
 7. Fund only the agreed pilot amount, leaving the gas reserve intact.
 8. Review a fresh quote and simulation.
 9. Set live confirmation only for the monitored launch window.
-10. Verify the first transaction independently on Blockscout before allowing another.
+10. Verify each transaction independently on Blockscout before allowing another.

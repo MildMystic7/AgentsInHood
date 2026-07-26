@@ -1,38 +1,41 @@
 # Telegram notifications
 
-AgentsInHood can publish arena decisions and confirmed mainnet transaction links to a Telegram chat
-or channel.
+AgentsInHood uses one Telegram publisher: the persistent Railway mainnet worker.
 
-## Bot and channel
+Messages are sent only after an on-chain trade is confirmed. Every notification includes the
+`[MAINNET CONFIRMED]` label, the cents-sized notional, and a Robinhood Chain Blockscout link.
+Dry-run decisions and virtual arena events are never sent to Telegram.
 
-1. Create a bot with [@BotFather](https://t.me/BotFather).
-2. Add it as an administrator to the destination channel.
-3. Send one message to the channel.
-4. Open `https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates`.
-5. Copy the destination `chat.id`.
+## Railway variables
 
-## Vercel variables
+Configure these as server-only Railway variables on `alphahood-worker`:
 
 ```env
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
-NOTIFY_SECRET=
-NEXT_PUBLIC_TELEGRAM_URL=
-KV_REST_API_URL=
-KV_REST_API_TOKEN=
 ```
 
-`NEXT_PUBLIC_TELEGRAM_URL` is optional. All other secrets must remain server-side.
+Do not configure the bot token in Vercel, GitHub Actions, public variables, or client-side code.
+The website can optionally expose a public community link through `NEXT_PUBLIC_TELEGRAM_URL`; that
+URL is not a bot credential.
 
-## GitHub settings
+## Bot identity
 
-In `MildMystic7/AgentsInHood`:
+The Bot API can update the visible name and description. The `@username` must be changed manually
+with [@BotFather](https://t.me/BotFather).
 
-- Add the Actions secret `NOTIFY_SECRET` with the same value used in Vercel.
-- Add the Actions variable `SITE_URL=https://www.agentsinhood.xyz`.
+Recommended identity:
 
-The scheduled workflow calls `/api/notify/telegram`. The endpoint is protected by `NOTIFY_SECRET`
-and uses KV to avoid duplicate messages.
+- Visible name: `AgentsInHood`
+- Description: `Verified AgentsInHood mainnet execution alerts. Every trade links to Blockscout.`
+- Username: an available AgentsInHood-specific handle
 
-Arena decisions and mainnet executions are different records. A notification may only use the
-phrase `confirmed mainnet trade` when it includes a valid Blockscout transaction link.
+## Verification
+
+1. Confirm Railway reports Telegram as configured.
+2. Confirm `getWebhookInfo` has no unexpected webhook.
+3. Execute only a reviewed cents-sized mainnet trade.
+4. Check that exactly one Telegram message arrives with the same hash shown on `/verify`.
+
+Telegram delivery must never be treated as execution proof. The Blockscout transaction and the
+public wallet remain the source of truth.

@@ -32,14 +32,11 @@ Add only the services currently in use:
 ARENA_LIVE_LLM=false
 KV_REST_API_URL=
 KV_REST_API_TOKEN=
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_CHAT_ID=
-NOTIFY_SECRET=
 NEXT_PUBLIC_TELEGRAM_URL=
 ```
 
-The mainnet private key and Uniswap API key belong only in the Railway worker. They must never be
-added to Vercel.
+Telegram bot credentials, the mainnet private key, and the Uniswap API key belong only in the
+Railway worker. They must never be added to Vercel.
 
 After the Railway worker is deployed and its public status endpoint is verified, add this
 server-only variable:
@@ -54,7 +51,7 @@ Open the generated Vercel preview URL and confirm:
 
 - `/` loads the arena.
 - `/docs` loads.
-- `/verify` says `Preparing mainnet pilot` or `Mainnet dry run`, never `Live` prematurely.
+- `/verify` shows `Verified mainnet pilot` after it receives independently verifiable transactions.
 - `/api/agents/summary` returns JSON.
 - `/api/agents/history` returns JSON.
 - `/api/mainnet/status` returns JSON and exposes no secret.

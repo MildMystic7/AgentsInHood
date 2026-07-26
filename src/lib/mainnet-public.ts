@@ -21,6 +21,8 @@ export interface PublicMainnetStatus {
   mode: "off" | "dry-run" | "live";
   walletAddress: string | null;
   walletBalanceEth: string | null;
+  walletBalanceUsdg: string | null;
+  positions: { symbol: string; tokenAddress: string; balance: string }[];
   dailyBudgetUsd: number;
   dailyReservedUsd: number;
   dailySpentUsd: number;
@@ -32,6 +34,8 @@ export interface PublicMainnetStatus {
   totalGasBudgetUsd: number;
   totalGasReservedUsd: number;
   minSecondsBetweenTrades: number;
+  maxPriceImpactPercent: number;
+  slippagePercent: number;
   trades: PublicMainnetTrade[];
   connected: boolean;
 }
@@ -43,10 +47,12 @@ export function fallbackMainnetStatus(): PublicMainnetStatus {
     mode: "off",
     walletAddress: MAINNET_WALLET_ADDRESS,
     walletBalanceEth: null,
+    walletBalanceUsdg: null,
+    positions: [],
     dailyBudgetUsd: 10,
     dailyReservedUsd: 0,
     dailySpentUsd: 0,
-    totalBudgetUsd: 2,
+    totalBudgetUsd: 1.75,
     totalReservedUsd: 0,
     totalSpentUsd: 0,
     dailyGasBudgetUsd: 0.5,
@@ -54,6 +60,8 @@ export function fallbackMainnetStatus(): PublicMainnetStatus {
     totalGasBudgetUsd: 1,
     totalGasReservedUsd: 0,
     minSecondsBetweenTrades: 600,
+    maxPriceImpactPercent: 10,
+    slippagePercent: 0.5,
     trades: [],
     connected: false,
   };

@@ -11,7 +11,7 @@ import {
   getPublicMainnetStatus,
   mainnetExplorerTxUrl,
 } from "./mainnet";
-import { escapeHtml, sendTelegramMessage, telegramConfigured } from "./telegram";
+import { sendConfirmedTradeNotification, telegramConfigured } from "./telegram";
 
 // Five independent decision loops feed one serialized Robinhood Chain mainnet
 // executor. Risk controls, not agent confidence, decide whether a transaction
@@ -101,19 +101,16 @@ async function tick(agent: (typeof AGENTS)[number]): Promise<void> {
     }`,
   );
 
-  if (telegramConfigured()) {
-    const emoji = decision.action === "BUY" ? "🟢" : "🔴";
-    const lines = [
-      `${emoji} <b>${escapeHtml(agent.name)}</b> — ${decision.action} ${escapeHtml(decision.symbol)}`,
-      `$${executedUsd.toFixed(2)} @ $${price.toFixed(2)}`,
-      `&#8220;${escapeHtml(decision.reasoning)}&#8221;`,
-    ];
-    if (execution.txHash) {
-      lines.push(`⛓ <a href="${mainnetExplorerTxUrl(execution.txHash)}">Verify mainnet trade</a>`);
-    } else {
-      lines.push(`Mode: ${escapeHtml(executionLabel)}`);
-    }
-    await sendTelegramMessage(lines.join("\n"));
+  if (telegramConfigured() && execution.mode === "live" && execution.status === "confirmed" && execution.txHash) {
+    const sent = await sendConfirmedTradeNotification({
+      agentName: agent.name,
+      action: decision.action,
+      symbol: decision.symbol,
+      usdAmount: executedUsd,
+      referencePriceUsd: price,
+      txUrl: mainnetExplorerTxUrl(execution.txHash),
+    });
+    if (!sent) console.error(`[${agent.id}] confirmed trade notification failed`);
   }
 }
 

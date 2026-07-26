@@ -34,14 +34,20 @@ transactions appear only on `/verify`.
 
 - **Network:** Robinhood Chain mainnet (`chainId 4663`)
 - **Shared wallet:** [`0xD4b34024432612f3a3E9e8Bf3f76b0eD6b956cdb`](https://robinhoodchain.blockscout.com/address/0xD4b34024432612f3a3E9e8Bf3f76b0eD6b956cdb)
-- **Current stage:** dry-run / awaiting reviewed funding and production secrets
+- **Current stage:** funded, verified mainnet pilot; the continuous worker remains in dry-run between reviewed live windows
 - **Trade size:** $0.01–$0.05
 - **Daily circuit breaker:** $10 maximum
-- **Initial lifetime pilot cap:** $2, raised only after manual review
+- **Initial lifetime pilot cap:** $1.75, raised only after manual review
+- **Maximum price impact:** 10%; slippage tolerance remains 0.5%
 - **Execution:** official Robinhood Stock Token registry + Uniswap routing
 - **Settlement:** USDG for trade notional; ETH is reserved for network gas
 
 No unconfirmed or dry-run decision is presented as an on-chain trade.
+
+Verified bootstrap executions:
+
+- [Gemini 3.1 Pro — BUY $0.01 AAPL](https://robinhoodchain.blockscout.com/tx/0x5ef19e2c0fcecf99a2ca85a99e1ef9e93ba41c8ddf26e89cf1056c267a39a40e)
+- [GPT-5.4 — BUY $0.01 AAPL](https://robinhoodchain.blockscout.com/tx/0x65581a597adca8c8a4ef2ad252ec59d68d7c7fd7a643a806b9d451d32189680e)
 
 ## Risk controls
 
@@ -65,9 +71,9 @@ Live mode will not start without the wallet key, Uniswap API key, persistent KV,
   anchors, and public risk metrics.
 - [x] **Mainnet safety layer** — shared-wallet queue, official token discovery, execution
   validation, hard budgets, gas reserve, and public status API.
-- [ ] **Dry-run validation** — run every agent through quotes and simulations without sending
+- [x] **Dry-run validation** — run every agent through quotes and simulations without sending
   transactions; publish rejected and accepted plans separately from real trades.
-- [ ] **Cents-sized mainnet pilot** — fund the dedicated wallet, start below the hard limits, and
+- [x] **Cents-sized mainnet pilot** — fund the dedicated wallet, start below the hard limits, and
   publish every confirmed transaction on `/verify`.
 - [ ] **Champion selection** — compare repeated seasons by return, Sharpe, drawdown, stability,
   and execution quality.
@@ -91,7 +97,8 @@ Railway worker
 ├── shared mainnet execution queue
 ├── Robinhood Stock Token registry
 ├── Uniswap quote + simulation + calldata
-└── persistent budget and idempotency state
+├── persistent budget and idempotency state
+└── confirmed-only Telegram publisher
 ```
 
 ## Run the website
@@ -116,9 +123,9 @@ cp .env.example .env
 npm run dev
 ```
 
-Keep `MAINNET_MODE=dry-run` until quotes, budgets, KV persistence, wallet backup, deployment
-variables, and the exact funding transaction have been reviewed. Notional and gas have independent
-daily and lifetime circuit breakers, and live attempts share a 10-minute cooldown. See
+Keep `MAINNET_MODE=dry-run` between explicitly reviewed live windows. Notional and gas have
+independent daily and lifetime circuit breakers, live attempts share a 10-minute cooldown, and
+Telegram publishes only confirmed transactions with Blockscout proof. See
 [`worker/README.md`](worker/README.md) for the launch checklist.
 
 ## Stack

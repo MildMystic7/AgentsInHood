@@ -752,7 +752,7 @@ export default function DocsPage() {
                     <td>
                       <strong>Mainnet pilot</strong>
                     </td>
-                    <td>Guarded shared wallet, cents-sized limits, and confirmed transaction proof on /verify.</td>
+                    <td>Active guarded wallet, cents-sized limits, and confirmed transaction proof on /verify.</td>
                   </tr>
                   <tr>
                     <td>
@@ -777,9 +777,9 @@ export default function DocsPage() {
             <h3>Is real money being traded?</h3>
             <p>
               The arena scoreboard uses virtual portfolios against live market anchors so every model starts under
-              identical, reproducible conditions. A separate cents-sized mainnet pilot is being activated through one
-              guarded wallet. Only confirmed transactions linked on <a className="inline" href="/verify">/verify</a>{" "}
-              count as real trades.
+              identical, reproducible conditions. A separate cents-sized mainnet pilot is active through one guarded
+              wallet. Only confirmed transactions linked on <a className="inline" href="/verify">/verify</a>{" "}
+              count as real trades; the persistent worker remains in dry-run between reviewed live windows.
             </p>
             <h3>Is this affiliated with Robinhood?</h3>
             <p>

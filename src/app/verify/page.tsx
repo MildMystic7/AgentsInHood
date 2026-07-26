@@ -204,13 +204,25 @@ export default function VerifyPage() {
     };
   }, []);
 
+  const confirmedTrades = status.trades.filter((trade) => trade.status === "confirmed" && trade.txHash);
+  const positions = status.positions ?? [];
+  const maxPriceImpactPercent = status.maxPriceImpactPercent ?? 10;
+  const slippagePercent = status.slippagePercent ?? 0.5;
+  const hasConfirmedMainnetTrade = confirmedTrades.length > 0;
   const label =
     status.mode === "live" && status.connected
       ? "Live on mainnet"
+      : hasConfirmedMainnetTrade && status.connected
+        ? "Verified mainnet pilot"
       : status.mode === "dry-run" && status.connected
         ? "Mainnet dry run"
         : "Preparing mainnet pilot";
-  const tone = status.mode === "live" && status.connected ? "green" : status.connected ? "amber" : "grey";
+  const tone =
+    (status.mode === "live" || hasConfirmedMainnetTrade) && status.connected
+      ? "green"
+      : status.connected
+        ? "amber"
+        : "grey";
 
   return (
     <Shell>
@@ -252,7 +264,9 @@ export default function VerifyPage() {
           <Card>
             <div className="label">Pilot cap</div>
             <div className="value">{money(status.totalSpentUsd)} / {money(status.totalBudgetUsd)}</div>
-            <div className="hint">{money(status.totalReservedUsd)} reserved · maximum 1–5 cents per trade</div>
+            <div className="hint">
+              {money(status.totalReservedUsd)} reserved · 1–5 cents · impact ≤ {maxPriceImpactPercent}%
+            </div>
           </Card>
         </Grid>
 
@@ -271,8 +285,26 @@ export default function VerifyPage() {
             ) : (
               "not configured"
             )}
+            {status.walletBalanceUsdg != null ? ` · ${Number(status.walletBalanceUsdg).toFixed(5)} USDG` : ""}
             {status.walletBalanceEth !== null ? ` · ${Number(status.walletBalanceEth).toFixed(6)} ETH` : ""}
           </p>
+          {positions.length > 0 && (
+            <p>
+              On-chain holdings:{" "}
+              {positions.map((position, index) => (
+                <span key={position.tokenAddress}>
+                  {index > 0 ? " · " : ""}
+                  <a
+                    href={`${ROBINHOOD_EXPLORER}/token/${position.tokenAddress}?tab=holders`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {Number(position.balance).toPrecision(8)} {position.symbol}
+                  </a>
+                </span>
+              ))}
+            </p>
+          )}
           <p>
             Gas circuit breaker: {money(status.dailyGasReservedUsd)} / {money(status.dailyGasBudgetUsd)} daily ·{" "}
             {money(status.totalGasReservedUsd)} / {money(status.totalGasBudgetUsd)} pilot
@@ -281,7 +313,7 @@ export default function VerifyPage() {
 
         <Panel>
           <h2>Execution records</h2>
-          {status.trades.length === 0 ? (
+          {confirmedTrades.length === 0 ? (
             <p>
               No confirmed mainnet trade has been published yet. This page will not show a LIVE label until the worker
               is connected and a transaction can be independently verified.
@@ -301,7 +333,7 @@ export default function VerifyPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {status.trades.map((trade) => (
+                  {confirmedTrades.map((trade) => (
                     <tr key={trade.id}>
                       <td>{new Date(trade.createdAt).toLocaleString()}</td>
                       <td>{trade.agentId}</td>
@@ -311,9 +343,23 @@ export default function VerifyPage() {
                       <td>{trade.status}</td>
                       <td>
                         {trade.txHash ? (
-                          <a href={`${ROBINHOOD_EXPLORER}/tx/${trade.txHash}`} target="_blank" rel="noreferrer">
-                            Transaction ↗
-                          </a>
+                          <>
+                            <a href={`${ROBINHOOD_EXPLORER}/tx/${trade.txHash}`} target="_blank" rel="noreferrer">
+                              Trade ↗
+                            </a>
+                            {trade.approvalTxHash ? (
+                              <>
+                                {" · "}
+                                <a
+                                  href={`${ROBINHOOD_EXPLORER}/tx/${trade.approvalTxHash}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Approval ↗
+                                </a>
+                              </>
+                            ) : null}
+                          </>
                         ) : (
                           "—"
                         )}
@@ -331,8 +377,8 @@ export default function VerifyPage() {
           <p>
             The executor verifies chain ID 4663, resolves official stock-token contracts from Robinhood&apos;s registry,
             pins the official Uniswap Universal Router, serializes nonces, enforces wallet-wide budgets, preserves an
-            ETH gas reserve, and rejects excessive gas, slippage, price impact, duplicate decisions, or failed
-            simulations.
+            ETH gas reserve, and rejects excessive gas, slippage above {slippagePercent}%, price impact above{" "}
+            {maxPriceImpactPercent}%, duplicate decisions, or failed simulations.
           </p>
         </Panel>
       </Wrap>
