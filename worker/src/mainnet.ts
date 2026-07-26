@@ -579,15 +579,16 @@ async function executeLiveTrade(args: {
       quoteResponse.permitData.values,
     );
   }
-  const swapResponse = await uniswapRequest<SwapResponse>("/swap", {
+  const swapBody: Record<string, unknown> = {
     quote: quoteResponse.quote,
-    permitData: quoteResponse.permitData,
-    signature,
     simulateTransaction: true,
     safetyMode: "SAFE",
     refreshGasPrice: true,
     urgency: "normal",
-  });
+  };
+  if (quoteResponse.permitData) swapBody.permitData = quoteResponse.permitData;
+  if (signature) swapBody.signature = signature;
+  const swapResponse = await uniswapRequest<SwapResponse>("/swap", swapBody);
   const request = txRequest(swapResponse.swap);
   if (swapResponse.swap.from && swapResponse.swap.from.toLowerCase() !== wallet.address.toLowerCase()) {
     throw new Error("Swap transaction sender does not match the configured wallet");
