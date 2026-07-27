@@ -16,10 +16,10 @@ drawdown, allocation weights, decisions, and the reasoning behind each decision.
 | Layer | Purpose | Capital |
 | --- | --- | --- |
 | **Arena benchmark** | Reproducible model comparison against live market anchors | Normalized base-100 books |
-| **Mainnet pilot** | Cents-sized execution through one guarded wallet on Robinhood Chain | Real, strictly capped funds |
+| **Mainnet execution** | Cents-sized execution through one guarded wallet on Robinhood Chain | Real, strictly capped funds |
 
 The arena remains the scientific control: identical conditions and repeatable seasons. The
-mainnet pilot is deliberately separate. A decision is only described as a real trade after its
+mainnet execution layer is deliberately separate. A decision is only described as a real trade after its
 transaction is confirmed and linked on the public verification page.
 
 ### How public performance is reported
@@ -30,24 +30,20 @@ holdings are shown as weights, decision sizes as percentages of the initial benc
 as percentage return, Sharpe ratio, and maximum drawdown. Real-money limits and confirmed
 transactions appear only on `/verify`.
 
-### Mainnet pilot status
+### Mainnet execution status
 
 - **Network:** Robinhood Chain mainnet (`chainId 4663`)
-- **Shared wallet:** [`0xD4b34024432612f3a3E9e8Bf3f76b0eD6b956cdb`](https://robinhoodchain.blockscout.com/address/0xD4b34024432612f3a3E9e8Bf3f76b0eD6b956cdb)
-- **Current stage:** funded, verified mainnet pilot; the continuous worker remains in dry-run between reviewed live windows
+- **Active wallet:** always published with its Blockscout link on [`/verify`](https://www.agentsinhood.xyz/verify)
+- **Current stage:** phase 05 of 06 — preparing the fresh-wallet 24-hour on-chain challenge
 - **Trade size:** $0.01–$0.05
 - **Daily circuit breaker:** $10 maximum
-- **Initial lifetime pilot cap:** $1.75, raised only after manual review
+- **Current lifetime execution cap:** $1.75, raised only after manual review
 - **Maximum price impact:** 10%; slippage tolerance: 10%
 - **Execution:** official Robinhood Stock Token registry + Uniswap routing
 - **Settlement:** USDG for trade notional; ETH is reserved for network gas
 
-No unconfirmed or dry-run decision is presented as an on-chain trade.
-
-Verified bootstrap executions:
-
-- [Gemini 3.1 Pro — BUY $0.01 AAPL](https://robinhoodchain.blockscout.com/tx/0x5ef19e2c0fcecf99a2ca85a99e1ef9e93ba41c8ddf26e89cf1056c267a39a40e)
-- [GPT-5.4 — BUY $0.01 AAPL](https://robinhoodchain.blockscout.com/tx/0x65581a597adca8c8a4ef2ad252ec59d68d7c7fd7a643a806b9d451d32189680e)
+No unconfirmed decision is presented as an on-chain trade. The complete confirmed history,
+including transaction hashes and explorer proof, is published on [`/verify`](https://www.agentsinhood.xyz/verify).
 
 ## Risk controls
 
@@ -67,20 +63,21 @@ Live mode will not start without the wallet key, Uniswap API key, persistent KV,
 
 ## Roadmap
 
-- [x] **Open arena** — five distinct agents, equal capital, transparent reasoning, live market
-  anchors, and public risk metrics.
-- [x] **Mainnet safety layer** — shared-wallet queue, official token discovery, execution
-  validation, hard budgets, gas reserve, and public status API.
-- [x] **Dry-run validation** — run every agent through quotes and simulations without sending
-  transactions; publish rejected and accepted plans separately from real trades.
-- [x] **Cents-sized mainnet pilot** — fund the dedicated wallet, start below the hard limits, and
-  publish every confirmed transaction on `/verify`.
-- [ ] **Champion selection** — compare repeated seasons by return, Sharpe, drawdown, stability,
-  and execution quality.
-- [ ] **Open-source winning agent** — package the selected agent, methodology, and reproducible
-  evaluation for community use.
-- [ ] **Agent ecosystem launch** — publish token and governance details only after technical,
-  security, legal, and market-readiness review.
+![AgentsInHood roadmap — current phase 05 of 06](.github/assets/agentsinhood-roadmap-24h-launch.png)
+
+- [x] **01 — Open arena:** equal starting conditions, transparent decisions, live market anchors,
+  and public risk metrics.
+- [x] **02 — Benchmark engine:** reproducible 24-hour seasons with a shared clock, universe, and
+  base-100 scoring system.
+- [x] **03 — Guarded mainnet:** shared-wallet transaction queue, hard budgets, gas reserve,
+  idempotency, simulation, and public status.
+- [x] **04 — Verified pilot:** cents-sized mainnet executions with every confirmed transaction
+  linked on `/verify`.
+- [ ] **05 — 24-hour on-chain challenge — current phase:** activate a fresh dedicated wallet,
+  execute under fixed risk limits, monitor the complete window, and publish every confirmation.
+- [ ] **06 — Champion selection + open-source agent launch:** only after the 24-hour window ends,
+  select the winner using return, Sharpe, drawdown, stability, and execution quality; then publish
+  the selected agent, methodology, and reproducible evaluation.
 
 ## Architecture
 
@@ -123,7 +120,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Keep `MAINNET_MODE=dry-run` between explicitly reviewed live windows. Notional and gas have
+Keep the signer locked outside explicitly approved execution windows. Notional and gas have
 independent daily and lifetime circuit breakers, live attempts share a 10-minute cooldown, and
 Telegram publishes only confirmed transactions with Blockscout proof. See
 [`worker/README.md`](worker/README.md) for the launch checklist.

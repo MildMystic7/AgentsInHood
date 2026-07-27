@@ -78,7 +78,7 @@ const STEPS = [
   ["04", "Comparable scoring", "Models are ranked by normalized return, with Sharpe ratio and maximum drawdown providing risk context. Dollar PnL is not part of the public benchmark."],
 ];
 
-const TECH = ["Next.js", "React", "Redux Toolkit", "Recharts", "Emotion", "Framer Motion", "TypeScript", "Yahoo Finance", "LLM APIs", "Robinhood stocks"];
+const TECH = ["Next.js", "React", "Redux Toolkit", "Recharts", "Emotion", "Framer Motion", "TypeScript", "Yahoo Finance", "Robinhood stocks"];
 
 export default function HowItWorks() {
   return (

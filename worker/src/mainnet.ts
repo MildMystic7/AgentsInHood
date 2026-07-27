@@ -8,6 +8,7 @@ import {
   parseUnits,
 } from "ethers";
 import { kvConfigured, kvGet, kvSet } from "./kv";
+import { scopedKey } from "./run-scope";
 
 export const ROBINHOOD_CHAIN_ID = 4663;
 export const ROBINHOOD_RPC_URL =
@@ -101,6 +102,7 @@ const ERC20_ABI = [
 
 let assetCache: { expiresAt: number; assets: RobinhoodAsset[] } | null = null;
 let memoryState: MainnetState | null = null;
+let memoryStateKey: string | null = null;
 let executionQueue: Promise<unknown> = Promise.resolve();
 
 function envInt(name: string, fallback: number): number {
@@ -136,8 +138,13 @@ function freshState(): MainnetState {
 }
 
 async function loadMainnetState(): Promise<MainnetState> {
+  const activeStateKey = scopedKey(STATE_KEY);
+  if (memoryStateKey !== activeStateKey) {
+    memoryState = null;
+    memoryStateKey = activeStateKey;
+  }
   if (kvConfigured()) {
-    const raw = await kvGet(STATE_KEY);
+    const raw = await kvGet(activeStateKey);
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as MainnetState;
@@ -169,7 +176,9 @@ async function loadMainnetState(): Promise<MainnetState> {
 async function saveMainnetState(state: MainnetState): Promise<void> {
   state.trades = state.trades.slice(-200);
   memoryState = state;
-  if (kvConfigured()) await kvSet(STATE_KEY, JSON.stringify(state));
+  const activeStateKey = scopedKey(STATE_KEY);
+  memoryStateKey = activeStateKey;
+  if (kvConfigured()) await kvSet(activeStateKey, JSON.stringify(state));
 }
 
 function runExclusive<T>(fn: () => Promise<T>): Promise<T> {

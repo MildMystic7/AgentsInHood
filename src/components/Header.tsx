@@ -214,7 +214,7 @@ export default function Header() {
         <Hero id="top">
           <LaunchBadge href="/verify">
             <LiveDot active />
-            <b>Mainnet pilot</b> · verify every real transaction
+            <b>Mainnet execution</b> · verify every real transaction
           </LaunchBadge>
           <H1>
             Frontier AI models,

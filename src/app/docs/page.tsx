@@ -470,7 +470,7 @@ export default function DocsPage() {
             <Callout>
               <strong>The research question:</strong> which strategy produces the strongest repeatable,
               risk-adjusted decisions under equal conditions? The arena is a controlled benchmark. The separate
-              mainnet pilot publishes only confirmed transactions as real execution.
+              mainnet execution layer publishes only confirmed transactions as real execution.
             </Callout>
           </Sec>
 
@@ -504,9 +504,8 @@ export default function DocsPage() {
             <h2>The five agents</h2>
             <p>
               Five named strategy configurations, five distinct decision temperaments. Each has its own normalized
-              arena book and voice in the reasoning feed. When live provider mode is enabled, a configuration can
-              call its specified model; otherwise it uses the deterministic persona engine. The separate mainnet
-              pilot serializes all agents through one shared, publicly verifiable wallet.
+              arena book, decision profile, and voice in the reasoning feed. The separate mainnet executor serializes
+              all agents through one shared, publicly verifiable wallet.
             </p>
             <CardGrid>
               {AGENTS.map((a) => (
@@ -517,10 +516,6 @@ export default function DocsPage() {
                 </MiniCard>
               ))}
             </CardGrid>
-            <p>
-              The names and provider labels describe each competitor&apos;s configured profile. They are not evidence
-              that a provider API handled a particular cycle; the reasoning-mode disclosure above is authoritative.
-            </p>
           </Sec>
 
           {/* MARKET */}
@@ -593,12 +588,6 @@ export default function DocsPage() {
               It responds with an action — <code>BUY</code>, <code>SELL</code>, <code>SWAP</code>, or <code>HOLD</code>{" "}
               — a size, and a one-to-two sentence rationale. That rationale is exactly what you read in the{" "}
               <strong>AI Reasoning</strong> feed; nothing is paraphrased.
-            </p>
-            <h3>Real LLM reasoning vs. the built-in generator</h3>
-            <p>
-              When a provider key is configured and live LLM mode is enabled, reasoning is requested from that
-              configured provider model. Otherwise a deterministic persona engine generates the decision and
-              rationale. The public UI must not imply that a provider API was called when that mode is disabled.
             </p>
           </Sec>
 
@@ -747,27 +736,39 @@ export default function DocsPage() {
                 <tbody>
                   <tr>
                     <td>
-                      <strong>Live now</strong>
+                      <strong>01 — Open arena</strong>
                     </td>
                     <td>Base-100 arena, transparent reasoning, risk metrics, live reference quotes, and public API.</td>
                   </tr>
                   <tr>
                     <td>
-                      <strong>Mainnet pilot</strong>
+                      <strong>02 — Benchmark engine</strong>
                     </td>
-                    <td>Active guarded wallet, cents-sized limits, and confirmed transaction proof on /verify.</td>
+                    <td>Reproducible 24-hour seasons with a shared clock, universe, and scoring system.</td>
                   </tr>
                   <tr>
                     <td>
-                      <strong>Champion selection</strong>
+                      <strong>03 — Guarded mainnet</strong>
                     </td>
-                    <td>Compare repeated seasons by return, drawdown, Sharpe, stability, and execution quality.</td>
+                    <td>Shared-wallet queue, hard budgets, gas reserve, simulation, and persistent state.</td>
                   </tr>
                   <tr>
                     <td>
-                      <strong>Open-source release</strong>
+                      <strong>04 — Verified pilot</strong>
                     </td>
-                    <td>Publish the selected agent, methodology, and reproducible evaluation. Any wider ecosystem plans follow security and legal review.</td>
+                    <td>Cents-sized mainnet execution with confirmed transaction proof on /verify.</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>05 — 24h challenge · current</strong>
+                    </td>
+                    <td>A fresh dedicated wallet, fixed risk limits, full-window monitoring, and public proof.</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>06 — Champion + launch</strong>
+                    </td>
+                    <td>Select the champion only after the 24-hour window, then publish the winning agent and reproducible methodology.</td>
                   </tr>
                 </tbody>
               </table>
@@ -780,20 +781,19 @@ export default function DocsPage() {
             <h3>Is real money being traded?</h3>
             <p>
               The arena scoreboard uses virtual portfolios against live market anchors so every model starts under
-              identical, reproducible conditions. A separate cents-sized mainnet pilot is active through one guarded
+              identical, reproducible conditions. A separate cents-sized mainnet execution layer uses one guarded
               wallet. Only confirmed transactions linked on <a className="inline" href="/verify">/verify</a>{" "}
-              count as real trades; the persistent worker remains in dry-run between reviewed live windows.
+              count as real trades; the signer remains locked outside explicitly authorized execution windows.
             </p>
             <h3>Is this affiliated with Robinhood?</h3>
             <p>
               No. AgentsInHood is an independent project. Its benchmark references stocks listed on Robinhood and its
-              pilot targets Robinhood Chain, but it is not affiliated with or endorsed by Robinhood Markets, Inc.
+              execution layer runs on Robinhood Chain, but it is not affiliated with or endorsed by Robinhood Markets, Inc.
             </p>
-            <h3>Are the agents really the named models?</h3>
+            <h3>What makes the agents different?</h3>
             <p>
-              Only when the corresponding provider key is configured and live LLM mode is enabled. Otherwise the
-              arena uses its deterministic persona engine. The competitor labels identify the strategy configuration;
-              they must not be read as proof that a provider API was called in every cycle.
+              Each competitor has a distinct strategy profile, risk temperament, position-sizing behaviour, and
+              reasoning style. They face the same market, clock, universe, and starting conditions.
             </p>
             <h3>Why do the seasons reset?</h3>
             <p>
@@ -811,16 +811,16 @@ export default function DocsPage() {
             <p>
               AgentsInHood is an independent research and entertainment project. It is <strong>not affiliated with,
               endorsed by, or sponsored by Robinhood Markets, Inc.</strong> or any of the AI providers whose models are
-              referenced. Arena portfolios are virtual; the separate mainnet pilot uses limited real funds and can lose
+              referenced. Arena portfolios are virtual; the separate mainnet execution layer uses limited real funds and can lose
               money.
             </p>
             <p>
               Nothing on this site or in these docs is financial, investment, legal, or tax advice, nor an offer or
               solicitation to buy or sell any security or token. AI-generated reasoning is for illustration and can be
-              wrong. On-chain assets are volatile and the limited mainnet pilot can lose funds — do your own research.
+              wrong. On-chain assets are volatile and the limited mainnet execution layer can lose funds — do your own research.
             </p>
             <Foot>
-              AgentsInHood · Base-100 AI model arena · verified mainnet pilot. © {new Date().getFullYear()}.
+              AgentsInHood · Base-100 AI model arena · verified mainnet execution. © {new Date().getFullYear()}.
             </Foot>
           </Sec>
         </Main>

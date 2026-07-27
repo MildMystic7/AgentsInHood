@@ -308,7 +308,7 @@ export default function AgentModal() {
               </>
             )}
 
-            <Verification href="/verify">Shared mainnet pilot · verify confirmed execution →</Verification>
+            <Verification href="/verify">Shared mainnet execution · verify every confirmation →</Verification>
           </Sheet>
         </Backdrop>
       )}

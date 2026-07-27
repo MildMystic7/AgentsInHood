@@ -33,6 +33,23 @@ npm run dev
 `new-mainnet-wallet` refuses to overwrite an existing mainnet key. It writes the private key to the
 ignored local `.env` file and prints only the public address.
 
+To rotate an existing wallet without losing access to it:
+
+```powershell
+$env:ROTATE_MAINNET_WALLET_CONFIRM="CREATE_FRESH_WALLET_AND_ARCHIVE_CURRENT"
+npm run rotate-mainnet-wallet
+```
+
+The command verifies that the current key matches its address, archives the complete previous
+configuration under the Git-ignored `worker/.wallets/` directory, and activates a fresh wallet in
+the local `.env`. It never prints either private key. Do not change the Railway wallet address
+until the new wallet is funded, backed up, and passes a read-only balance check.
+
+Set a unique `MAINNET_RUN_ID` before a fresh public challenge, for example
+`24h-2026-07-28`. Mainnet budgets, idempotency records, transaction history, and every agent
+portfolio are scoped to that run ID. Leaving it unset preserves the existing production state.
+The complete launch and monitoring checklist is in [`24H_CHALLENGE.md`](24H_CHALLENGE.md).
+
 ## Modes
 
 ```env
