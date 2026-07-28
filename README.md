@@ -33,11 +33,12 @@ transactions appear only on `/verify`.
 ### Mainnet execution status
 
 - **Network:** Robinhood Chain mainnet (`chainId 4663`)
-- **Active wallet:** always published with its Blockscout link on [`/verify`](https://www.agentsinhood.xyz/verify)
-- **Current stage:** phase 05 of 06 — preparing the fresh-wallet 24-hour on-chain challenge
+- **Live challenge wallet:** [`0x24380E7cBF708137CE2A7CB471B96850ecE985BA`](https://robinhoodchain.blockscout.com/address/0x24380E7cBF708137CE2A7CB471B96850ecE985BA)
+- **Previous test wallet:** [`0xD4b34024432612f3a3E9e8Bf3f76b0eD6b956cdb`](https://robinhoodchain.blockscout.com/address/0xD4b34024432612f3a3E9e8Bf3f76b0eD6b956cdb) — retained as public pilot history and excluded from challenge scoring
+- **Current stage:** phase 05 of 06 — launching the fresh-wallet 24-hour on-chain challenge
 - **Trade size:** $0.01–$0.05
 - **Daily circuit breaker:** $10 maximum
-- **Current lifetime execution cap:** $1.75, raised only after manual review
+- **Challenge execution cap:** $10 gross notional over the full window
 - **Maximum price impact:** 10%; slippage tolerance: 10%
 - **Execution:** official Robinhood Stock Token registry + Uniswap routing
 - **Settlement:** USDG for trade notional; ETH is reserved for network gas
@@ -58,7 +59,7 @@ The mainnet worker treats every agent output as an untrusted proposal. Before si
 7. Rejects excessive gas, slippage, price impact, duplicates, and failed simulations.
 8. Requires persistent state and an explicit human-set live confirmation.
 
-Live mode will not start without the wallet key, Uniswap API key, persistent KV, and
+Live mode will not start without `MAINNET_PRIVATE_KEY`, the Uniswap API key, persistent KV, and
 `MAINNET_LIVE_CONFIRM=I_UNDERSTAND_REAL_FUNDS`.
 
 ## Roadmap

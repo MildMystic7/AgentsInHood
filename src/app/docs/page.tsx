@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import styled from "@emotion/styled";
 import { AGENTS, TOKENS, ARENA_INDEX_BASE, DURATION_HOURS } from "@/engine/config";
 import { LogoMark } from "@/components/Logo";
+import {
+  MAINNET_WALLET_ADDRESS,
+  PREVIOUS_TEST_WALLET_ADDRESS,
+  ROBINHOOD_EXPLORER,
+} from "@/lib/mainnet-public";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AgentsInHood documentation. Real product docs — content, not a placeholder.
@@ -784,6 +789,29 @@ export default function DocsPage() {
               identical, reproducible conditions. A separate cents-sized mainnet execution layer uses one guarded
               wallet. Only confirmed transactions linked on <a className="inline" href="/verify">/verify</a>{" "}
               count as real trades; the signer remains locked outside explicitly authorized execution windows.
+            </p>
+            <h3>Which wallet counts for the challenge?</h3>
+            <p>
+              The dedicated challenge wallet is{" "}
+              <a
+                className="inline"
+                href={`${ROBINHOOD_EXPLORER}/address/${MAINNET_WALLET_ADDRESS}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {MAINNET_WALLET_ADDRESS}
+              </a>
+              . The earlier{" "}
+              <a
+                className="inline"
+                href={`${ROBINHOOD_EXPLORER}/address/${PREVIOUS_TEST_WALLET_ADDRESS}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                pilot wallet
+              </a>{" "}
+              remains public for auditability, but its operational test transactions do not count toward the 24-hour
+              challenge.
             </p>
             <h3>Is this affiliated with Robinhood?</h3>
             <p>

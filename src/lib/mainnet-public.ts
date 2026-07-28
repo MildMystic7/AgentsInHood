@@ -1,4 +1,5 @@
-export const MAINNET_WALLET_ADDRESS = "0xD4b34024432612f3a3E9e8Bf3f76b0eD6b956cdb";
+export const MAINNET_WALLET_ADDRESS = "0x24380E7cBF708137CE2A7CB471B96850ecE985BA";
+export const PREVIOUS_TEST_WALLET_ADDRESS = "0xD4b34024432612f3a3E9e8Bf3f76b0eD6b956cdb";
 export const ROBINHOOD_CHAIN_ID = 4663;
 export const ROBINHOOD_EXPLORER = "https://robinhoodchain.blockscout.com";
 
@@ -52,7 +53,7 @@ export function fallbackMainnetStatus(): PublicMainnetStatus {
     dailyBudgetUsd: 10,
     dailyReservedUsd: 0,
     dailySpentUsd: 0,
-    totalBudgetUsd: 1.75,
+    totalBudgetUsd: 10,
     totalReservedUsd: 0,
     totalSpentUsd: 0,
     dailyGasBudgetUsd: 0.5,

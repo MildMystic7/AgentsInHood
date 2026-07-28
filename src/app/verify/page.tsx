@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import styled from "@emotion/styled";
 import { LogoMark } from "@/components/Logo";
 import {
+  PREVIOUS_TEST_WALLET_ADDRESS,
   ROBINHOOD_EXPLORER,
   fallbackMainnetStatus,
   type PublicMainnetStatus,
@@ -271,9 +272,9 @@ export default function VerifyPage() {
         </Grid>
 
         <Panel>
-          <h2>Wallet and explorer</h2>
+          <h2>Challenge wallet and provenance</h2>
           <p>
-            Public wallet:{" "}
+            Live challenge wallet:{" "}
             {status.walletAddress ? (
               <a
                 href={`${ROBINHOOD_EXPLORER}/address/${status.walletAddress}`}
@@ -287,6 +288,17 @@ export default function VerifyPage() {
             )}
             {status.walletBalanceUsdg != null ? ` · ${Number(status.walletBalanceUsdg).toFixed(5)} USDG` : ""}
             {status.walletBalanceEth !== null ? ` · ${Number(status.walletBalanceEth).toFixed(6)} ETH` : ""}
+          </p>
+          <p>
+            Previous test wallet:{" "}
+            <a
+              href={`${ROBINHOOD_EXPLORER}/address/${PREVIOUS_TEST_WALLET_ADDRESS}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {PREVIOUS_TEST_WALLET_ADDRESS} ↗
+            </a>
+            {" "}· retained as public pilot history and excluded from the 24-hour challenge scoring window.
           </p>
           {positions.length > 0 && (
             <p>
