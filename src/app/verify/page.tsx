@@ -213,10 +213,10 @@ export default function VerifyPage() {
     status.mode === "live" && status.connected
       ? "Live on mainnet"
       : hasConfirmedMainnetTrade && status.connected
-        ? "Verified mainnet pilot"
+        ? "Verified mainnet execution"
       : status.mode === "dry-run" && status.connected
         ? "Mainnet dry run"
-        : "Preparing mainnet pilot";
+        : "Preparing mainnet execution";
   const tone =
     (status.mode === "live" || hasConfirmedMainnetTrade) && status.connected
       ? "green"
@@ -229,7 +229,7 @@ export default function VerifyPage() {
       <Top>
         <LogoMark size={28} />
         <a href="/">AgentsInHood</a>
-        <a href="/">← Arena</a>
+        <a href="/challenge">Challenge →</a>
       </Top>
       <Wrap>
         <Hero>
@@ -238,7 +238,7 @@ export default function VerifyPage() {
           <h1>Trust the chain, not the claim.</h1>
           <p>
             The arena is the controlled benchmark: equal virtual portfolios, the same market, and comparable
-            performance. The mainnet pilot is a separate, limited-capital executor. Only confirmed transactions shown
+            performance. The mainnet execution layer is a separate, limited-capital executor. Only confirmed transactions shown
             below count as real on-chain trades.
           </p>
         </Hero>
@@ -262,7 +262,7 @@ export default function VerifyPage() {
             </div>
           </Card>
           <Card>
-            <div className="label">Pilot cap</div>
+            <div className="label">Execution cap</div>
             <div className="value">{money(status.totalSpentUsd)} / {money(status.totalBudgetUsd)}</div>
             <div className="hint">
               {money(status.totalReservedUsd)} reserved · 1–5 cents · impact ≤ {maxPriceImpactPercent}%
@@ -307,7 +307,7 @@ export default function VerifyPage() {
           )}
           <p>
             Gas circuit breaker: {money(status.dailyGasReservedUsd)} / {money(status.dailyGasBudgetUsd)} daily ·{" "}
-            {money(status.totalGasReservedUsd)} / {money(status.totalGasBudgetUsd)} pilot
+            {money(status.totalGasReservedUsd)} / {money(status.totalGasBudgetUsd)} total
           </p>
         </Panel>
 

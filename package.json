@@ -2,7 +2,7 @@
   "name": "agentsinhood",
   "version": "0.2.0",
   "private": true,
-  "description": "AgentsInHood — a transparent AI trading arena with a guarded, cents-sized Robinhood Chain mainnet pilot.",
+  "description": "AgentsInHood — a transparent AI trading arena with guarded, publicly verifiable Robinhood Chain execution.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

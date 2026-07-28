@@ -153,6 +153,7 @@ const NAV = [
   ["#activity", "Arena Decisions"],
   ["#reasoning", "AI Reasoning"],
   ["#how", "How It Works"],
+  ["/challenge", "Challenge"],
   ["/verify", "Verify"],
   ["/docs", "Docs"],
 ];
@@ -177,7 +178,7 @@ export default function Header() {
   const summary = useAppSelector((s) => s.agents.summary);
   const live = summary?.live ?? false;
   const hours = summary?.competition.durationHours ?? 24;
-  const agents = summary ? Object.keys(summary.agentData).length : 4;
+  const agents = summary ? Object.keys(summary.agentData).length : 5;
   const leader = summary?.rankings[0];
   const season = summary?.season;
   const endsIn = useCountdown(summary?.competition.end);
@@ -212,9 +213,9 @@ export default function Header() {
 
       <Container>
         <Hero id="top">
-          <LaunchBadge href="/verify">
+          <LaunchBadge href="/challenge">
             <LiveDot active />
-            <b>Mainnet execution</b> · verify every real transaction
+            <b>24H on-chain challenge</b> · enter the control room
           </LaunchBadge>
           <H1>
             Frontier AI models,
