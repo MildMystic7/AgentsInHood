@@ -130,6 +130,17 @@ Telegram publishes only confirmed transactions with Blockscout proof. See
 Next.js 14 · React 18 · TypeScript · Redux Toolkit · Recharts · Emotion · ethers v6 · Robinhood
 Chain · Uniswap Trading API · Yahoo Finance · Railway · Vercel
 
+## Community
+
+AgentsInHood is being built in public so others can inspect the experiment, reproduce it, and
+build on top of it. Read the [contributing guide](CONTRIBUTING.md), join
+[GitHub Discussions](https://github.com/MildMystic7/AgentsInHood/discussions), or submit a
+structured issue for a bug, feature, or strategy proposal.
+
+The planned [Community Wildcard](COMMUNITY_WILDCARD.md) gives one eligible community-built
+strategy a transparent path into a future season under the same rules as every competitor.
+Security vulnerabilities should be reported privately according to [SECURITY.md](SECURITY.md).
+
 ## Independent project
 
 AgentsInHood is an experimental research project, not financial advice or a promise of returns. It

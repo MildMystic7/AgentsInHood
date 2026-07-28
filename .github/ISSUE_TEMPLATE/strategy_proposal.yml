@@ -1,0 +1,60 @@
+name: Strategy proposal
+description: Propose a strategy for research and the future Community Wildcard.
+title: "[Strategy]: "
+labels: ["strategy"]
+body:
+  - type: markdown
+    attributes:
+      value: Early proposals are welcome. Arena entry begins only when the official Community Wildcard window opens.
+  - type: input
+    id: name
+    attributes:
+      label: Strategy name
+    validations:
+      required: true
+  - type: textarea
+    id: thesis
+    attributes:
+      label: Thesis
+      description: What market behavior is the strategy trying to capture, and why?
+    validations:
+      required: true
+  - type: textarea
+    id: inputs
+    attributes:
+      label: Inputs and data sources
+      description: List every required input, dependency, and external service.
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: Decision rules
+      description: Explain entries, exits, sizing, timing, and the public reasoning format.
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk and failure modes
+      description: Describe expected drawdowns, invalidation conditions, and protective controls.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproducibility plan
+      description: Explain how reviewers can test and replay the strategy.
+    validations:
+      required: true
+  - type: checkboxes
+    id: declarations
+    attributes:
+      label: Declarations
+      options:
+        - label: The implementation will be open source under a clearly stated license.
+          required: true
+        - label: The strategy does not require direct wallet access or hidden credentials.
+          required: true
+        - label: I have disclosed material limitations, dependencies, and conflicts.
+          required: true
