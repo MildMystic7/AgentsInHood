@@ -901,7 +901,10 @@ export async function getPublicMainnetStatus(): Promise<{
     slippagePercent: envNumber("MAINNET_SLIPPAGE_PERCENT", 10),
     auditRecoveryConfigured: Boolean(process.env.MAINNET_AUDIT_TRADES_JSON),
     auditRecoveryCount: recoveredAuditTrades.length,
-    trades: mergeAuditTrades(state.trades).reverse().slice(0, 50),
+    trades: mergeAuditTrades(state.trades)
+      .filter((trade) => trade.status !== "rejected")
+      .reverse()
+      .slice(0, 50),
   };
 }
 
