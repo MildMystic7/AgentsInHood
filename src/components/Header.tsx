@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styled from "@emotion/styled";
+import { ArrowRight, Trophy } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import { Container, LiveDot } from "./ui";
 import { LogoMark } from "./Logo";
@@ -49,7 +50,7 @@ const Nav = styled.nav`
   }
   /* On small screens, keep the nav — horizontally scrollable instead of hidden. */
   @media (max-width: 860px) {
-    gap: 16px;
+    gap: 15px;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
@@ -110,6 +111,50 @@ const LaunchBadge = styled.a`
   }
 `;
 
+const HeroActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+
+  a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 17px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    transition:
+      border-color 0.15s,
+      background 0.15s,
+      color 0.15s;
+  }
+
+  a.primary {
+    border-color: var(--green);
+    color: #071000;
+    background: var(--green);
+  }
+
+  a.primary:hover {
+    background: var(--green-bright);
+  }
+
+  a.secondary {
+    color: var(--dim);
+    background: rgba(12, 15, 13, 0.86);
+  }
+
+  a.secondary:hover {
+    border-color: rgba(194, 247, 58, 0.42);
+    color: var(--text);
+  }
+`;
+
 const Lede = styled.p`
   color: var(--dim);
   font-size: clamp(15px, 1.6vw, 18px);
@@ -148,13 +193,9 @@ const Stat = styled.div`
 `;
 
 const NAV = [
-  ["#arena", "The Arena"],
-  ["#agents", "Meet the Agents"],
-  ["#activity", "Arena Decisions"],
-  ["#reasoning", "AI Reasoning"],
-  ["#how", "How It Works"],
-  ["/challenge", "Challenge"],
-  ["/predict", "Predict"],
+  ["#arena", "Arena"],
+  ["#agents", "Agents"],
+  ["/challenge", "Challenge 01"],
   ["/verify", "Verify"],
   ["/docs", "Docs"],
 ];
@@ -214,9 +255,9 @@ export default function Header() {
 
       <Container>
         <Hero id="top">
-          <LaunchBadge href="/challenge">
+          <LaunchBadge href="/predict">
             <LiveDot active />
-            <b>24H on-chain challenge</b> · enter the control room
+            <b>New · Challenge 02</b> · community predictions on testnet
           </LaunchBadge>
           <H1>
             Frontier AI models,
@@ -229,6 +270,14 @@ export default function Header() {
             live quotes for Robinhood-listed stocks. Confirmed real transactions are disclosed separately on the
             verification page.
           </Lede>
+          <HeroActions>
+            <a className="primary" href="/predict">
+              Explore predictions <ArrowRight size={15} />
+            </a>
+            <a className="secondary" href="/challenge">
+              <Trophy size={14} /> Challenge 01 result
+            </a>
+          </HeroActions>
           <Stats>
             <Stat>
               <div className="l">Best Return</div>
