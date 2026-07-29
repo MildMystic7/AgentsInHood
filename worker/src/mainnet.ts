@@ -823,9 +823,12 @@ export async function getPublicMainnetStatus(): Promise<{
   minSecondsBetweenTrades: number;
   maxPriceImpactPercent: number;
   slippagePercent: number;
+  auditRecoveryConfigured: boolean;
+  auditRecoveryCount: number;
   trades: MainnetTradeRecord[];
 }> {
   const state = await loadMainnetState();
+  const recoveredAuditTrades = auditRecoveryTrades();
   const walletAddress = mainnetWalletAddress();
   let walletBalanceEth: string | null = null;
   let walletBalanceUsdg: string | null = null;
@@ -896,6 +899,8 @@ export async function getPublicMainnetStatus(): Promise<{
     minSecondsBetweenTrades: envInt("MAINNET_MIN_SECONDS_BETWEEN_TRADES", 600),
     maxPriceImpactPercent: envNumber("MAINNET_MAX_PRICE_IMPACT_PERCENT", 10),
     slippagePercent: envNumber("MAINNET_SLIPPAGE_PERCENT", 10),
+    auditRecoveryConfigured: Boolean(process.env.MAINNET_AUDIT_TRADES_JSON),
+    auditRecoveryCount: recoveredAuditTrades.length,
     trades: mergeAuditTrades(state.trades).reverse().slice(0, 50),
   };
 }
