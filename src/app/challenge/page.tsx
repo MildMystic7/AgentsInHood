@@ -1131,7 +1131,7 @@ export default function ChallengePage() {
           </div>
           <div>
             <a href="/verify">Verify execution</a> ·{" "}
-            <a href="/predict">Challenge 02 testnet</a> ·{" "}
+            <a href="/predict">Challenge 02 predictions</a> ·{" "}
             <a href="https://github.com/MildMystic7/AgentsInHood" target="_blank" rel="noreferrer">
               Source code
             </a>

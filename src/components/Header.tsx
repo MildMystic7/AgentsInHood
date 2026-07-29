@@ -257,7 +257,7 @@ export default function Header() {
         <Hero id="top">
           <LaunchBadge href="/predict">
             <LiveDot active />
-            <b>New · Challenge 02</b> · community predictions on testnet
+            <b>New · Challenge 02</b> · transparent community predictions
           </LaunchBadge>
           <H1>
             Frontier AI models,

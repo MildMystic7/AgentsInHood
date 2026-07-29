@@ -25,6 +25,11 @@ import { LogoMark } from "@/components/Logo";
 import {
   PREDICTION_AGENTS,
   PREDICTION_CHAIN,
+  PREDICTION_CONFIGURATION_READY,
+  PREDICTION_DEPLOYED,
+  PREDICTION_IS_MAINNET,
+  PREDICTION_LAUNCH_ENABLED,
+  PREDICTION_TERMS_URL,
   PREDICTION_VAULT_ABI,
   PREDICTION_VAULT_ADDRESS,
 } from "@/lib/prediction-vault";
@@ -48,6 +53,13 @@ type VaultSnapshot = {
   settlement: number;
   winningAgent: number;
   evidenceHash: string;
+  resultProposed: boolean;
+  proposedWinningAgent: number;
+  resultFinalizesAt: number;
+  minimumStake: bigint;
+  maximumStakePerWallet: bigint;
+  maximumTotalPool: bigint;
+  disputeDuration: number;
   totalPool: bigint;
   pools: bigint[];
 };
@@ -428,6 +440,25 @@ const Field = styled.label`
   }
 `;
 
+const Terms = styled.label`
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 16px 0;
+  color: var(--dim);
+  font-size: 11.5px;
+  line-height: 1.5;
+
+  input {
+    margin-top: 2px;
+    accent-color: var(--green);
+  }
+
+  a {
+    color: var(--green);
+  }
+`;
+
 const PositionBox = styled.div`
   margin: 0 0 16px;
   padding: 14px;
@@ -545,6 +576,9 @@ function targetTimestamp(snapshot: VaultSnapshot | null) {
   if (snapshot.phase === 0) return snapshot.startsAt;
   if (snapshot.phase === 1) return snapshot.bettingClosesAt;
   if (snapshot.phase === 2) return snapshot.challengeEndsAt;
+  if (snapshot.phase === 3 && snapshot.resultProposed) {
+    return snapshot.resultFinalizesAt;
+  }
   return 0;
 }
 
@@ -584,13 +618,19 @@ export default function PredictPage() {
   const [busy, setBusy] = useState("");
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-  const [loading, setLoading] = useState(Boolean(PREDICTION_VAULT_ADDRESS));
+  const [loading, setLoading] = useState(PREDICTION_DEPLOYED);
 
-  const deployed = Boolean(PREDICTION_VAULT_ADDRESS);
+  const deployed = PREDICTION_DEPLOYED;
+  const launchLocked =
+    PREDICTION_IS_MAINNET && !PREDICTION_CONFIGURATION_READY;
+  const interactionsEnabled =
+    PREDICTION_CONFIGURATION_READY &&
+    (!PREDICTION_IS_MAINNET || termsAccepted);
 
   const readVault = useCallback(async (walletAccount = account) => {
-    if (!PREDICTION_VAULT_ADDRESS) {
+    if (!PREDICTION_DEPLOYED) {
       setLoading(false);
       return;
     }
@@ -598,7 +638,7 @@ export default function PredictPage() {
     try {
       const provider = new JsonRpcProvider(
         PREDICTION_CHAIN.rpcUrl,
-        { chainId: PREDICTION_CHAIN.id, name: "robinhood-testnet" },
+        { chainId: PREDICTION_CHAIN.id, name: PREDICTION_CHAIN.networkName },
         { staticNetwork: true },
       );
       const contract = new Contract(
@@ -612,8 +652,15 @@ export default function PredictPage() {
         rawBetClose,
         rawEnd,
         rawSettlement,
+        rawResultProposed,
+        rawProposedWinner,
+        rawResultFinalizesAt,
         rawWinner,
         evidenceHash,
+        minimumStake,
+        maximumStakePerWallet,
+        maximumTotalPool,
+        disputeDuration,
         totalPool,
         pools,
       ] = await Promise.all([
@@ -622,8 +669,15 @@ export default function PredictPage() {
         contract.bettingClosesAt(),
         contract.challengeEndsAt(),
         contract.settlement(),
+        contract.resultProposed(),
+        contract.proposedWinningAgent(),
+        contract.resultFinalizesAt(),
         contract.winningAgent(),
         contract.resultEvidenceHash(),
+        contract.minimumStake(),
+        contract.maximumStakePerWallet(),
+        contract.maximumTotalPool(),
+        contract.resultDisputeDuration(),
         contract.totalPool(),
         contract.allAgentPools(),
       ]);
@@ -634,8 +688,15 @@ export default function PredictPage() {
         bettingClosesAt: Number(rawBetClose),
         challengeEndsAt: Number(rawEnd),
         settlement: Number(rawSettlement),
+        resultProposed: rawResultProposed,
+        proposedWinningAgent: Number(rawProposedWinner),
+        resultFinalizesAt: Number(rawResultFinalizesAt),
         winningAgent: Number(rawWinner),
         evidenceHash,
+        minimumStake,
+        maximumStakePerWallet,
+        maximumTotalPool,
+        disputeDuration: Number(disputeDuration),
         totalPool,
         pools: Array.from(pools),
       });
@@ -658,7 +719,7 @@ export default function PredictPage() {
       }
       setError("");
     } catch (readError) {
-      setError(`Unable to read the testnet vault: ${messageFrom(readError)}`);
+      setError(`Unable to read the ${PREDICTION_CHAIN.name} vault: ${messageFrom(readError)}`);
     } finally {
       setLoading(false);
     }
@@ -734,7 +795,7 @@ export default function PredictPage() {
       const nextAccount = accounts[0] ?? "";
       setAccount(nextAccount);
       await readVault(nextAccount);
-      setFeedback("Wallet connected to Robinhood Chain Testnet.");
+      setFeedback(`Wallet connected to ${PREDICTION_CHAIN.name}.`);
     } catch (connectError) {
       setError(messageFrom(connectError));
     } finally {
@@ -748,7 +809,9 @@ export default function PredictPage() {
       setError("");
       setFeedback("");
       try {
-        if (!PREDICTION_VAULT_ADDRESS) throw new Error("Testnet vault deployment is pending.");
+        if (!PREDICTION_CONFIGURATION_READY) {
+          throw new Error("Vault transactions are launch-locked.");
+        }
         const injected = window.ethereum;
         if (!injected) throw new Error("No browser wallet found.");
         await switchNetwork();
@@ -760,12 +823,12 @@ export default function PredictPage() {
           signer,
         );
         const transaction = await action(contract);
-        setFeedback("Transaction submitted. Waiting for testnet confirmation…");
+        setFeedback(`Transaction submitted. Waiting for ${PREDICTION_CHAIN.name} confirmation...`);
         await transaction.wait();
         const nextAccount = await signer.getAddress();
         setAccount(nextAccount);
         await readVault(nextAccount);
-        setFeedback("Confirmed on Robinhood Chain Testnet.");
+        setFeedback(`Confirmed on ${PREDICTION_CHAIN.name}.`);
       } catch (transactionError) {
         setFeedback("");
         setError(messageFrom(transactionError));
@@ -810,7 +873,16 @@ export default function PredictPage() {
       value = parseEther(stakeAmount);
       if (value <= 0n) throw new Error();
     } catch {
-      setError("Enter a valid testnet ETH amount greater than zero.");
+      setError("Enter a valid ETH amount greater than zero.");
+      return;
+    }
+    const nextPosition = position.amount + value;
+    if (snapshot && nextPosition < snapshot.minimumStake) {
+      setError(`Minimum position: ${eth(snapshot.minimumStake)}.`);
+      return;
+    }
+    if (snapshot && nextPosition > snapshot.maximumStakePerWallet) {
+      setError(`Maximum per wallet: ${eth(snapshot.maximumStakePerWallet)}.`);
       return;
     }
     await transact("bet", (contract) =>
@@ -825,6 +897,11 @@ export default function PredictPage() {
       if (value <= 0n || value > position.amount) throw new Error();
     } catch {
       setError("Enter a valid amount no greater than your current stake.");
+      return;
+    }
+    const remaining = position.amount - value;
+    if (snapshot && remaining > 0n && remaining < snapshot.minimumStake) {
+      setError(`Leave at least ${eth(snapshot.minimumStake)} or withdraw the full position.`);
       return;
     }
     await transact("withdraw", (contract) => contract.withdrawStake(value));
@@ -863,7 +940,13 @@ export default function PredictPage() {
           <StatusCard>
             <div className="status">
               {currentPhase === 1 ? <Clock3 size={13} /> : <LockKeyhole size={13} />}
-              {deployed ? phaseLabel(currentPhase) : "Testnet deployment pending"}
+              {launchLocked
+                ? "Mainnet launch locked"
+                : snapshot?.resultProposed && currentPhase === 3
+                  ? "Result review open"
+                : deployed
+                  ? phaseLabel(currentPhase)
+                  : `${PREDICTION_CHAIN.name} deployment pending`}
             </div>
             <div className="countdown">{countdown(phaseTarget, now)}</div>
             <div className="caption">
@@ -872,7 +955,9 @@ export default function PredictPage() {
                 : currentPhase === 1
                   ? "until predictions lock"
                   : currentPhase === 2
-                    ? "until the battle ends"
+                  ? "until the battle ends"
+                  : currentPhase === 3 && snapshot?.resultProposed
+                    ? "until the result can be finalized"
                     : "on-chain lifecycle"}
             </div>
           </StatusCard>
@@ -881,10 +966,29 @@ export default function PredictPage() {
         <Notice>
           <ShieldCheck size={17} />
           <div>
-            <strong>Testnet preview — no real money or prizes.</strong> Robinhood
-            Chain Testnet ETH has no monetary value. This interface is for contract
-            testing only; a mainnet version requires a separate reviewed deployment,
-            independent security audit, and applicable legal approval.
+            {PREDICTION_IS_MAINNET ? (
+              launchLocked ? (
+                <>
+                  <strong>Mainnet is prepared but launch-locked.</strong> Wallet
+                  transactions remain disabled until the reviewed contract address,
+                  production RPC, participant terms, and explicit launch switch are
+                  configured together. Current launch switch:{" "}
+                  {PREDICTION_LAUNCH_ENABLED ? "enabled, configuration incomplete" : "off"}.
+                </>
+              ) : (
+                <>
+                  <strong>Real-value prediction round.</strong> Read the published
+                  rules and risks before participating. Stakes are locked after the
+                  first hour and smart-contract transactions cannot be reversed.
+                </>
+              )
+            ) : (
+              <>
+                <strong>Testnet preview — no real money or prizes.</strong> Robinhood
+                Chain Testnet ETH has no monetary value. This interface is for
+                contract and participant-flow testing.
+              </>
+            )}
           </div>
         </Notice>
 
@@ -960,6 +1064,22 @@ export default function PredictPage() {
               <Wallet size={18} color="var(--green)" />
             </div>
             <ActionBody>
+              {PREDICTION_IS_MAINNET && PREDICTION_CONFIGURATION_READY && (
+                <Terms>
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(event) => setTermsAccepted(event.target.checked)}
+                  />
+                  <span>
+                    I have read and accept the{" "}
+                    <a href={PREDICTION_TERMS_URL} target="_blank" rel="noreferrer">
+                      round rules, eligibility terms, and risk notice
+                    </a>
+                    .
+                  </span>
+                </Terms>
+              )}
               {account && hasPosition && (
                 <PositionBox>
                   <div className="label">Current backing</div>
@@ -971,14 +1091,17 @@ export default function PredictPage() {
               )}
 
               {!account ? (
-                <WalletButton onClick={() => void connect()} disabled={busy === "connect"}>
+                <WalletButton
+                  onClick={() => void connect()}
+                  disabled={busy === "connect" || launchLocked}
+                >
                   <Wallet size={16} />
                   {busy === "connect" ? "Connecting…" : "Connect wallet"}
                 </WalletButton>
               ) : canClaim ? (
                 <WalletButton
                   onClick={() => void transact("claim", (contract) => contract.claim())}
-                  disabled={Boolean(busy)}
+                  disabled={Boolean(busy) || !interactionsEnabled}
                 >
                   <CheckCircle2 size={16} />
                   Claim {eth(position.payout)}
@@ -988,7 +1111,7 @@ export default function PredictPage() {
                   onClick={() =>
                     void transact("refund", (contract) => contract.claimRefund())
                   }
-                  disabled={Boolean(busy)}
+                  disabled={Boolean(busy) || !interactionsEnabled}
                 >
                   Claim refund · {eth(position.amount)}
                 </WalletButton>
@@ -996,18 +1119,26 @@ export default function PredictPage() {
                 <>
                   {!changingAgent && (
                     <Field>
-                      Testnet ETH stake
+                      {PREDICTION_IS_MAINNET ? "ETH stake" : "Testnet ETH stake"}
                       <input
                         inputMode="decimal"
+                        min={snapshot ? formatEther(snapshot.minimumStake) : undefined}
+                        max={
+                          snapshot
+                            ? formatEther(snapshot.maximumStakePerWallet)
+                            : undefined
+                        }
                         value={stakeAmount}
                         onChange={(event) => setStakeAmount(event.target.value)}
-                        aria-label="Testnet ETH stake"
+                        aria-label={PREDICTION_IS_MAINNET ? "ETH stake" : "Testnet ETH stake"}
                       />
                     </Field>
                   )}
                   <WalletButton
                     onClick={() => void primaryAction()}
-                    disabled={!deployed || !predictionsOpen || Boolean(busy)}
+                    disabled={
+                      !interactionsEnabled || !predictionsOpen || Boolean(busy)
+                    }
                   >
                     {busy
                       ? "Confirming…"
@@ -1021,19 +1152,21 @@ export default function PredictPage() {
                   {hasPosition && predictionsOpen && (
                     <>
                       <Field>
-                        Withdraw testnet ETH
+                        Withdraw {PREDICTION_IS_MAINNET ? "ETH" : "testnet ETH"}
                         <input
                           inputMode="decimal"
                           placeholder={formatEther(position.amount)}
                           value={withdrawAmount}
                           onChange={(event) => setWithdrawAmount(event.target.value)}
-                          aria-label="Withdraw testnet ETH"
+                          aria-label={
+                            PREDICTION_IS_MAINNET ? "Withdraw ETH" : "Withdraw testnet ETH"
+                          }
                         />
                       </Field>
                       <WalletButton
                         className="secondary"
                         onClick={() => void withdraw()}
-                        disabled={Boolean(busy)}
+                        disabled={Boolean(busy) || !interactionsEnabled}
                       >
                         Withdraw from vault
                       </WalletButton>
@@ -1046,8 +1179,13 @@ export default function PredictPage() {
               {error && <Feedback error>{error}</Feedback>}
               {!deployed && (
                 <Feedback error>
-                  The tested contract is ready; the public testnet address has not
-                  been configured yet.
+                  The reviewed interface is ready; the public {PREDICTION_CHAIN.name}
+                  contract and RPC configuration have not been completed.
+                </Feedback>
+              )}
+              {launchLocked && (
+                <Feedback error>
+                  Launch lock is active. No wallet transaction can be submitted here.
                 </Feedback>
               )}
             </ActionBody>
@@ -1064,8 +1202,10 @@ export default function PredictPage() {
             <div className="value mono">{eth(snapshot?.totalPool ?? 0n)}</div>
           </Fact>
           <Fact>
-            <div className="label">Custody</div>
-            <div className="value">Non-withdrawable contract</div>
+            <div className="label">Per-wallet limit</div>
+            <div className="value">
+              {snapshot ? eth(snapshot.maximumStakePerWallet) : "Pending deployment"}
+            </div>
           </Fact>
           <Fact>
             <div className="label">Contract</div>
@@ -1080,8 +1220,22 @@ export default function PredictPage() {
                   {compactAddress(PREDICTION_VAULT_ADDRESS)} <ExternalLink size={11} />
                 </a>
               ) : (
-                "Pending testnet deployment"
+                `Pending ${PREDICTION_CHAIN.name} deployment`
               )}
+            </div>
+          </Fact>
+          <Fact>
+            <div className="label">Round cap</div>
+            <div className="value">
+              {snapshot ? eth(snapshot.maximumTotalPool) : "Pending deployment"}
+            </div>
+          </Fact>
+          <Fact>
+            <div className="label">Result review</div>
+            <div className="value">
+              {snapshot
+                ? `${Math.round(snapshot.disputeDuration / 60)} minutes`
+                : "Pending deployment"}
             </div>
           </Fact>
         </Facts>

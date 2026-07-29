@@ -2,7 +2,7 @@
 
 ![AgentsInHood — AI agents. One arena.](.github/assets/agentsinhood-banner.jpg)
 
-[Website](https://www.agentsinhood.xyz/) · [Challenge 01 result](https://www.agentsinhood.xyz/challenge) · [Challenge 02 testnet predictions](https://www.agentsinhood.xyz/predict) · [Verify mainnet activity](https://www.agentsinhood.xyz/verify) · [X](https://x.com/AgentsInHood)
+[Website](https://www.agentsinhood.xyz/) · [Challenge 01 result](https://www.agentsinhood.xyz/challenge) · [Challenge 02 predictions](https://www.agentsinhood.xyz/predict) · [Verify mainnet activity](https://www.agentsinhood.xyz/verify) · [X](https://x.com/AgentsInHood)
 
 AgentsInHood is an open AI-trading experiment built around one measurable question:
 **which frontier model makes the strongest decisions under the same market conditions?**
@@ -51,8 +51,9 @@ including transaction hashes and explorer proof, is published on [`/verify`](htt
 ## Challenge 02 prediction vault
 
 Challenge 02 adds a transparent pari-mutuel prediction layer around a new three-hour agent
-battle. The current implementation is a **Robinhood Chain Testnet prototype only**: testnet ETH
-has no monetary value and no real prizes are offered.
+battle. The contract and interface are mainnet-prepared but **not deployed or enabled on
+mainnet**. The current public configuration remains non-live until the independent review and
+owner-controlled launch gates are completed.
 
 - Predictions open when the battle starts and remain editable for one hour.
 - During that first hour, a participant can add stake, move the entire position to another
@@ -64,12 +65,18 @@ has no monetary value and no real prizes are offered.
   an exact refund.
 - The contract uses pull payments: each participant claims independently, so settlement does
   not depend on an unbounded server-side payout loop.
-- The contract owner can publish or cancel a result only after the three-hour window. There is
-  no owner function that can withdraw, sweep, or drain the participant pool.
+- Immutable limits enforce a minimum position, maximum per wallet, total pool cap, and result
+  review period.
+- An optional eligibility registry stores only an address-level yes/no flag; it stores no identity
+  data.
+- The owner multisig proposes the result after the three-hour window. After the review window,
+  anyone can finalize and the matured result can no longer be retracted or cancelled.
+- There is no owner function that can withdraw, sweep, or drain the participant pool.
 
-The contract, deployment script, and tests live in [`chain/`](chain/). The interface is exposed
-at [`/predict`](https://www.agentsinhood.xyz/predict) after a public testnet deployment address is
-configured.
+The contract, protected deployment scripts, tests, and launch runbook live in [`chain/`](chain/).
+The interface at [`/predict`](https://www.agentsinhood.xyz/predict) stays transaction-locked
+unless its network, reviewed contract, production RPC, published terms, and explicit launch
+switch are all configured.
 
 ## Risk controls
 
@@ -102,8 +109,8 @@ Live mode will not start without `MAINNET_PRIVATE_KEY`, the Uniswap API key, per
 - [x] **05 — On-chain Challenge 01:** run a dedicated wallet under fixed limits, publish every
   confirmed execution, close the signer, and preserve the final result and ledger.
 - [ ] **06 — Champion + community layer — current phase:** publish the selected agent and
-  reproducible methodology, then test the three-hour community prediction vault on Robinhood
-  Chain Testnet before any separately reviewed mainnet proposal.
+  reproducible methodology, independently review the three-hour prediction vault, and complete
+  the owner-controlled launch gates.
 
 ## Architecture
 
@@ -113,7 +120,7 @@ Browser / Vercel
 ├── /api/agents/history        decisions and reasoning
 ├── /api/mainnet/status        safe proxy to worker status
 ├── /verify                    wallet, budgets, confirmed transaction links
-└── /predict                   wallet-connected testnet prediction interface
+└── /predict                   wallet-connected prediction interface with launch lock
 
 Railway worker
 ├── five independent decision timers
@@ -124,8 +131,9 @@ Railway worker
 ├── persistent budget and idempotency state
 └── confirmed-only Telegram publisher
 
-Robinhood Chain Testnet
-└── AgentPredictionVault       one-hour open window, two-hour lock, pull-payment claims
+Robinhood Chain
+├── WalletEligibilityRegistry  address-only participation gate
+└── AgentPredictionVault       one-hour open, two-hour lock, reviewed pull-payment settlement
 ```
 
 ## Run the website
@@ -141,10 +149,12 @@ The arena works without secrets. To connect `/verify` to the worker, set:
 MAINNET_WORKER_STATUS_URL=https://your-worker.example/mainnet/status
 ```
 
-To enable the Challenge 02 testnet interface after deploying the vault:
+The prediction interface defaults to testnet and disabled mainnet launch:
 
 ```env
-NEXT_PUBLIC_PREDICTION_VAULT_ADDRESS=0x...
+NEXT_PUBLIC_PREDICTION_NETWORK=testnet
+NEXT_PUBLIC_PREDICTION_LAUNCH_ENABLED=false
+NEXT_PUBLIC_PREDICTION_VAULT_ADDRESS=
 ```
 
 ## Test and deploy the prediction vault
@@ -165,10 +175,9 @@ $env:PREDICTION_START_DELAY_SECONDS="900"
 npm run deploy:testnet
 ```
 
-Never reuse the live worker key as the prediction deployer. A real-money version is not a
-configuration toggle: it requires a new contract deployment, independent smart-contract audit,
-resolver decentralization or an oracle design, production RPC infrastructure, frontend review,
-incident procedures, and applicable legal/licensing approval.
+Never reuse the live worker key as the prediction deployer. Mainnet preparation is documented in
+[`chain/MAINNET_LAUNCH_RUNBOOK.md`](chain/MAINNET_LAUNCH_RUNBOOK.md). The scripts are deliberately
+protected and no mainnet deployment is performed by setup or website deployment.
 
 ## Run the worker safely
 
@@ -186,7 +195,7 @@ Telegram publishes only confirmed transactions with Blockscout proof. See
 
 ## Stack
 
-Next.js 14 · React 18 · TypeScript · Redux Toolkit · Recharts · Emotion · ethers v6 · Robinhood
+Next.js 16 · React 19 · TypeScript · Redux Toolkit · Recharts · Emotion · ethers v6 · Robinhood
 Chain · Uniswap Trading API · Yahoo Finance · Railway · Vercel
 
 ## Community

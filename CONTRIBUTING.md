@@ -42,7 +42,8 @@ npm run build
 
 The website and benchmark can run without signing credentials. Never use a funded wallet while
 developing or testing a contribution. Contract changes must be exercised on the local Hardhat
-network and Robinhood Chain Testnet only; testnet tokens have no monetary value.
+network and Robinhood Chain Testnet only; mainnet deployment is an owner-only launch operation
+outside the contribution workflow.
 
 ## Pull requests
 
@@ -69,7 +70,8 @@ approach, and how another contributor can reproduce the result.
 - Never bypass wallet limits, simulations, confirmation requirements, or confirmed-only
   reporting.
 - Do not add an operator withdrawal path to the prediction vault or weaken its one-hour
-  mutation lock, pull-payment settlement, reentrancy protection, or cancellation refunds.
+  mutation lock, immutable caps, eligibility gate, result-review period, pull-payment settlement,
+  reentrancy protection, or cancellation refunds.
 - Do not deploy contract changes to mainnet as part of a contribution.
 - Do not present benchmark decisions as real trades or promise financial returns.
 - Treat model output and community strategies as untrusted input.
