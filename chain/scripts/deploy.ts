@@ -17,6 +17,11 @@ const startsAt = latestBlock.timestamp + startDelaySeconds;
 const vault = await ethers.deployContract("AgentPredictionVault", [
   startsAt,
   deployer.address,
+  ethers.parseEther(process.env.PREDICTION_MINIMUM_STAKE_ETH ?? "0.001"),
+  ethers.parseEther(process.env.PREDICTION_MAXIMUM_STAKE_ETH ?? "1"),
+  ethers.parseEther(process.env.PREDICTION_MAXIMUM_POOL_ETH ?? "10"),
+  Number(process.env.PREDICTION_DISPUTE_SECONDS ?? "1800"),
+  ethers.ZeroAddress,
 ]);
 await vault.waitForDeployment();
 

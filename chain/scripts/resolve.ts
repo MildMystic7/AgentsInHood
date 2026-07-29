@@ -25,7 +25,9 @@ if (!latestBlock || latestBlock.timestamp < endsAt) {
   );
 }
 
-const transaction = await vault.resolve(winner, evidenceHash);
-console.log(`Resolution transaction: ${transaction.hash}`);
+const transaction = await vault.proposeResult(winner, evidenceHash);
+console.log(`Result proposal transaction: ${transaction.hash}`);
 await transaction.wait();
-console.log(`Winner ${winner} confirmed for vault ${address}.`);
+const finalizesAt = Number(await vault.resultFinalizesAt());
+console.log(`Winner ${winner} proposed for vault ${address}.`);
+console.log(`Public finalization opens at ${new Date(finalizesAt * 1000).toISOString()}.`);

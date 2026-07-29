@@ -5,10 +5,14 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+interface IWalletEligibilityRegistry {
+    function isEligible(address account) external view returns (bool);
+}
+
 /// @title AgentsInHood Agent Prediction Vault
 /// @notice A single-round, native-token pari-mutuel pool for a three-hour agent battle.
 /// @dev Stakes are mutable and withdrawable only during the first hour. The owner can
-///      publish the final agent after the battle, but can never withdraw the pool.
+///      propose the final agent after the battle, but can never withdraw the pool.
 contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
     uint8 public constant AGENT_COUNT = 5;
     uint64 public constant BETTING_DURATION = 1 hours;
@@ -38,9 +42,18 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
     uint64 public immutable startsAt;
     uint64 public immutable bettingClosesAt;
     uint64 public immutable challengeEndsAt;
+    uint64 public immutable resultDisputeDuration;
+    uint128 public immutable minimumStake;
+    uint128 public immutable maximumStakePerWallet;
+    uint256 public immutable maximumTotalPool;
+    address public immutable eligibilityRegistry;
 
     Settlement public settlement;
+    bool public resultProposed;
+    uint8 public proposedWinningAgent;
     uint8 public winningAgent;
+    uint64 public resultFinalizesAt;
+    bytes32 public proposedEvidenceHash;
     bytes32 public resultEvidenceHash;
     uint256 public totalPool;
     uint256 public remainingPayoutPool;
@@ -50,17 +63,25 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
     mapping(address account => Position position) private _positions;
 
     error BettingNotOpen();
-    error BettingStillOpen();
     error ChallengeStillRunning();
+    error IneligibleParticipant();
     error InvalidAgent();
+    error InvalidConfiguration();
     error InvalidEvidence();
     error InvalidStartTime();
+    error MaximumPoolExceeded();
+    error MaximumStakeExceeded();
+    error MinimumStakeRequired();
     error NoStake();
     error PositionAlreadyClaimed();
     error PositionOnDifferentAgent();
     error RoundAlreadySettled();
     error RoundNotCancelled();
     error RoundNotResolved();
+    error ResultAlreadyProposed();
+    error ResultDisputeActive();
+    error ResultDisputeEnded();
+    error ResultNotProposed();
     error TransferFailed();
     error WinningAgentRequired();
     error DirectTransferDisabled();
@@ -74,17 +95,44 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
     );
     event AgentChanged(address indexed account, uint8 indexed previousAgent, uint8 indexed newAgent);
     event StakeWithdrawn(address indexed account, uint8 indexed agentId, uint256 amount);
+    event ResultProposed(
+        uint8 indexed winningAgent,
+        bytes32 indexed evidenceHash,
+        uint64 finalizesAt
+    );
+    event ResultRetracted(bytes32 indexed reasonHash);
     event RoundResolved(uint8 indexed winningAgent, bytes32 indexed evidenceHash, uint256 totalPool);
     event RoundCancelled(bytes32 indexed evidenceHash, uint256 refundablePool);
     event PayoutClaimed(address indexed account, uint8 indexed agentId, uint256 stake, uint256 payout);
     event RefundClaimed(address indexed account, uint256 amount);
 
-    constructor(uint64 startTimestamp, address initialOwner) Ownable(initialOwner) {
+    constructor(
+        uint64 startTimestamp,
+        address initialOwner,
+        uint128 minimumStakeAmount,
+        uint128 maximumStakeAmount,
+        uint256 maximumPoolAmount,
+        uint64 disputeDuration,
+        address participantEligibilityRegistry
+    ) Ownable(initialOwner) {
         if (startTimestamp < block.timestamp) revert InvalidStartTime();
+        if (
+            minimumStakeAmount == 0 ||
+            maximumStakeAmount < minimumStakeAmount ||
+            maximumPoolAmount < maximumStakeAmount ||
+            disputeDuration < 30 minutes
+        ) {
+            revert InvalidConfiguration();
+        }
 
         startsAt = startTimestamp;
         bettingClosesAt = startTimestamp + BETTING_DURATION;
         challengeEndsAt = startTimestamp + CHALLENGE_DURATION;
+        minimumStake = minimumStakeAmount;
+        maximumStakePerWallet = maximumStakeAmount;
+        maximumTotalPool = maximumPoolAmount;
+        resultDisputeDuration = disputeDuration;
+        eligibilityRegistry = participantEligibilityRegistry;
     }
 
     modifier onlyOpen() {
@@ -106,6 +154,12 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
     function placeBet(uint8 agentId) external payable onlyOpen {
         _validateAgent(agentId);
         if (msg.value == 0) revert NoStake();
+        if (
+            eligibilityRegistry != address(0) &&
+            !IWalletEligibilityRegistry(eligibilityRegistry).isEligible(msg.sender)
+        ) {
+            revert IneligibleParticipant();
+        }
 
         Position storage position = _positions[msg.sender];
         if (position.amount > 0 && position.agentId != agentId) {
@@ -114,6 +168,9 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
 
         uint256 nextAmount = uint256(position.amount) + msg.value;
         if (nextAmount > type(uint128).max) revert NoStake();
+        if (nextAmount < minimumStake) revert MinimumStakeRequired();
+        if (nextAmount > maximumStakePerWallet) revert MaximumStakeExceeded();
+        if (totalPool + msg.value > maximumTotalPool) revert MaximumPoolExceeded();
 
         position.amount = uint128(nextAmount);
         position.agentId = agentId;
@@ -144,7 +201,10 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
         Position storage position = _positions[msg.sender];
         if (amount == 0 || amount > position.amount) revert NoStake();
 
-        position.amount -= uint128(amount);
+        uint256 nextAmount = uint256(position.amount) - amount;
+        if (nextAmount > 0 && nextAmount < minimumStake) revert MinimumStakeRequired();
+
+        position.amount = uint128(nextAmount);
         _agentPools[position.agentId] -= amount;
         totalPool -= amount;
 
@@ -152,15 +212,47 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
         emit StakeWithdrawn(msg.sender, position.agentId, amount);
     }
 
-    /// @notice Publishes the winning agent after the full challenge window.
-    /// @dev If nobody backed the published winner, the round is cancelled so every
-    ///      participant can recover their original stake.
-    function resolve(uint8 winner, bytes32 evidenceHash) external onlyOwner {
+    /// @notice Proposes a winner and opens a public review window before settlement.
+    function proposeResult(uint8 winner, bytes32 evidenceHash) external onlyOwner {
         if (block.timestamp < challengeEndsAt) revert ChallengeStillRunning();
         if (settlement != Settlement.Unresolved) revert RoundAlreadySettled();
+        if (resultProposed) revert ResultAlreadyProposed();
         if (evidenceHash == bytes32(0)) revert InvalidEvidence();
         _validateAgent(winner);
 
+        resultProposed = true;
+        proposedWinningAgent = winner;
+        proposedEvidenceHash = evidenceHash;
+        resultFinalizesAt = uint64(block.timestamp) + resultDisputeDuration;
+
+        emit ResultProposed(winner, evidenceHash, resultFinalizesAt);
+    }
+
+    /// @notice Retracts an incorrect proposal before it is finalized.
+    function retractResult(bytes32 reasonHash) external onlyOwner {
+        if (settlement != Settlement.Unresolved) revert RoundAlreadySettled();
+        if (!resultProposed) revert ResultNotProposed();
+        if (block.timestamp >= resultFinalizesAt) revert ResultDisputeEnded();
+        if (reasonHash == bytes32(0)) revert InvalidEvidence();
+
+        resultProposed = false;
+        proposedWinningAgent = 0;
+        proposedEvidenceHash = bytes32(0);
+        resultFinalizesAt = 0;
+
+        emit ResultRetracted(reasonHash);
+    }
+
+    /// @notice Finalizes the published result after its dispute window.
+    /// @dev Anyone can finalize. If nobody backed the proposed winner, every
+    ///      participant can recover their original stake.
+    function finalizeResult() external {
+        if (settlement != Settlement.Unresolved) revert RoundAlreadySettled();
+        if (!resultProposed) revert ResultNotProposed();
+        if (block.timestamp < resultFinalizesAt) revert ResultDisputeActive();
+
+        uint8 winner = proposedWinningAgent;
+        bytes32 evidenceHash = proposedEvidenceHash;
         resultEvidenceHash = evidenceHash;
         winningAgent = winner;
 
@@ -183,6 +275,9 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
         if (block.timestamp < challengeEndsAt) revert ChallengeStillRunning();
         if (settlement != Settlement.Unresolved) revert RoundAlreadySettled();
         if (evidenceHash == bytes32(0)) revert InvalidEvidence();
+        if (resultProposed && block.timestamp >= resultFinalizesAt) {
+            revert ResultDisputeEnded();
+        }
 
         settlement = Settlement.Cancelled;
         resultEvidenceHash = evidenceHash;
