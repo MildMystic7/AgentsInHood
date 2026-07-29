@@ -1,0 +1,29 @@
+{
+  "name": "@agentsinhood/prediction-vault",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AgentsInHood Challenge 02 pari-mutuel prediction vault.",
+  "scripts": {
+    "build": "hardhat build",
+    "test": "hardhat test",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network robinhoodTestnet"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.6.1"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.0.4",
+    "@nomicfoundation/hardhat-ethers-chai-matchers": "^3.0.3",
+    "@nomicfoundation/hardhat-mocha": "^3.0.4",
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.3",
+    "@nomicfoundation/hardhat-typechain": "^3.0.3",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "chai": "^6.2.2",
+    "ethers": "6.17.0",
+    "hardhat": "3.11.1",
+    "mocha": "^11.7.5",
+    "typescript": "^5.9.3"
+  }
+}
