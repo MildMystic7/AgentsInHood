@@ -822,6 +822,7 @@ export default function ChallengePage() {
         <nav aria-label="Challenge navigation">
           <a href="/">Arena</a>
           <a className="active" href="/challenge">Challenge</a>
+          <a href="/predict">Challenge 02</a>
           <a href="/verify">Verify</a>
           <a href="/docs">Docs</a>
         </nav>
@@ -1130,6 +1131,7 @@ export default function ChallengePage() {
           </div>
           <div>
             <a href="/verify">Verify execution</a> ·{" "}
+            <a href="/predict">Challenge 02 testnet</a> ·{" "}
             <a href="https://github.com/MildMystic7/AgentsInHood" target="_blank" rel="noreferrer">
               Source code
             </a>

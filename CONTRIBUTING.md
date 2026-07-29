@@ -31,8 +31,18 @@ cp .env.example .env
 npm run dev
 ```
 
+Prediction vault:
+
+```bash
+cd chain
+npm install
+npm test
+npm run build
+```
+
 The website and benchmark can run without signing credentials. Never use a funded wallet while
-developing or testing a contribution.
+developing or testing a contribution. Contract changes must be exercised on the local Hardhat
+network and Robinhood Chain Testnet only; testnet tokens have no monetary value.
 
 ## Pull requests
 
@@ -44,6 +54,7 @@ developing or testing a contribution.
    ```bash
    npm run build
    npm --prefix worker run build
+   npm run chain:test
    ```
 
 5. Complete the pull-request template, including verification evidence and risk impact.
@@ -57,6 +68,9 @@ approach, and how another contributor can reproduce the result.
   files. Sanitize logs and screenshots before sharing them.
 - Never bypass wallet limits, simulations, confirmation requirements, or confirmed-only
   reporting.
+- Do not add an operator withdrawal path to the prediction vault or weaken its one-hour
+  mutation lock, pull-payment settlement, reentrancy protection, or cancellation refunds.
+- Do not deploy contract changes to mainnet as part of a contribution.
 - Do not present benchmark decisions as real trades or promise financial returns.
 - Treat model output and community strategies as untrusted input.
 - Report security issues privately as described in [SECURITY.md](SECURITY.md).

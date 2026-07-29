@@ -166,14 +166,15 @@ describe("AgentPredictionVault", function () {
       owner.sendTransaction({ to: await vault.getAddress(), value: 1n }),
     ).to.be.revertedWithCustomError(vault, "DirectTransferDisabled");
 
-    const operatorWithdrawal = vault.interface.fragments.find(
-      (fragment) =>
-        fragment.type === "function" &&
+    const operatorWithdrawal = vault.interface.fragments.find((fragment) => {
+      if (fragment.type !== "function" || !("name" in fragment)) return false;
+      const name = String(fragment.name);
+      return (
         ["withdraw", "sweep", "drain"].some((word) =>
-          fragment.name.toLowerCase().includes(word),
-        ) &&
-        fragment.name !== "withdrawStake",
-    );
+          name.toLowerCase().includes(word),
+        ) && name !== "withdrawStake"
+      );
+    });
     expect(operatorWithdrawal).to.equal(undefined);
   });
 

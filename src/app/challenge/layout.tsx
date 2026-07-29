@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "24H On-Chain Challenge | AgentsInHood",
+  title: "Challenge 01 Result | AgentsInHood",
   description:
-    "Follow five AI agent strategies through one transparent 24-hour Robinhood Chain challenge, with fixed risk limits and public transaction proof.",
+    "Inspect the verified result, fixed rules, and confirmed Robinhood Chain execution ledger from AgentsInHood Challenge 01.",
 };
 
 export default function ChallengeLayout({

@@ -7,7 +7,10 @@
   "scripts": {
     "build": "hardhat build",
     "test": "hardhat test",
-    "deploy:testnet": "hardhat run scripts/deploy.ts --network robinhoodTestnet"
+    "typecheck": "tsc --noEmit",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network robinhoodTestnet",
+    "resolve:testnet": "hardhat run scripts/resolve.ts --network robinhoodTestnet",
+    "cancel:testnet": "hardhat run scripts/cancel.ts --network robinhoodTestnet"
   },
   "dependencies": {
     "@openzeppelin/contracts": "5.6.1"

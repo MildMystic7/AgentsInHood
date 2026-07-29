@@ -765,15 +765,15 @@ export default function DocsPage() {
                   </tr>
                   <tr>
                     <td>
-                      <strong>05 — 24h challenge · current</strong>
+                      <strong>05 — On-chain Challenge 01</strong>
                     </td>
-                    <td>A fresh dedicated wallet, fixed risk limits, full-window monitoring, and public proof.</td>
+                    <td>Dedicated wallet, fixed risk limits, 31 confirmed executions, a closed signer, and a preserved public ledger.</td>
                   </tr>
                   <tr>
                     <td>
-                      <strong>06 — Champion + launch</strong>
+                      <strong>06 — Champion + community layer · current</strong>
                     </td>
-                    <td>Select the champion only after the 24-hour window, then publish the winning agent and reproducible methodology.</td>
+                    <td>Publish the Run 01 champion and test a three-hour, wallet-connected pari-mutuel prediction vault on Robinhood Chain Testnet.</td>
                   </tr>
                 </tbody>
               </table>
@@ -812,6 +812,29 @@ export default function DocsPage() {
               </a>{" "}
               remains public for auditability, but its operational test transactions do not count toward the 24-hour
               challenge.
+            </p>
+            <h3>How does Challenge 02 prediction settlement work?</h3>
+            <p>
+              The current <a className="inline" href="/predict">Challenge 02 interface</a> is a
+              testnet-only prototype. Predictions can be added, moved, or withdrawn during the
+              first hour of a three-hour battle. Positions then lock for two hours. When the
+              result is published, each winning backer claims a proportional share of the complete
+              pool based on their share of all stake placed on the winning agent. If the round is
+              cancelled, each participant can claim an exact refund.
+            </p>
+            <h3>Can the operator withdraw the prediction pool?</h3>
+            <p>
+              No. The testnet vault exposes no owner withdrawal, sweep, or drain function.
+              Settlement uses participant-initiated claims instead of a server-side distribution
+              loop. The owner can publish or cancel the result only after the three-hour window,
+              and the evidence hash is stored on-chain with that decision.
+            </p>
+            <h3>Is the prediction vault ready for real money?</h3>
+            <p>
+              No. Testnet tokens have no monetary value. A real-money version would require a new
+              deployment rather than a variable change, plus an independent contract audit,
+              stronger result-resolution governance or an oracle, production infrastructure,
+              incident procedures, and applicable legal and licensing approval.
             </p>
             <h3>Is this affiliated with Robinhood?</h3>
             <p>
