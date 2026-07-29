@@ -67,6 +67,56 @@ const latestBlock = await ethers.provider.getBlock("latest");
 if (!latestBlock) throw new Error("Unable to read the latest block.");
 const startsAt = latestBlock.timestamp + startDelaySeconds;
 
+const deployerBalanceBefore = await ethers.provider.getBalance(deployer.address);
+const deployerNonce = await ethers.provider.getTransactionCount(deployer.address);
+const predictedRegistryAddress = ethers.getCreateAddress({
+  from: deployer.address,
+  nonce: deployerNonce,
+});
+const registryFactory = await ethers.getContractFactory(
+  "WalletEligibilityRegistry",
+);
+const vaultFactory = await ethers.getContractFactory("AgentPredictionVault");
+const registryDeployment = await registryFactory.getDeployTransaction(
+  owner,
+  eligibleAccounts,
+);
+const vaultDeployment = await vaultFactory.getDeployTransaction(
+  startsAt,
+  owner,
+  minimumStake,
+  maximumStake,
+  maximumPool,
+  disputeSeconds,
+  predictedRegistryAddress,
+);
+const [registryGas, vaultGas, feeData] = await Promise.all([
+  ethers.provider.estimateGas({
+    ...registryDeployment,
+    from: deployer.address,
+  }),
+  ethers.provider.estimateGas({
+    ...vaultDeployment,
+    from: deployer.address,
+  }),
+  ethers.provider.getFeeData(),
+]);
+const feePerGas = feeData.maxFeePerGas ?? feeData.gasPrice;
+if (feePerGas === null) {
+  throw new Error("Unable to estimate the deployment gas price.");
+}
+const estimatedDeploymentCost =
+  ((registryGas + vaultGas) * feePerGas * 120n) / 100n;
+if (deployerBalanceBefore < estimatedDeploymentCost) {
+  throw new Error(
+    `Deployer needs approximately ${ethers.formatEther(
+      estimatedDeploymentCost,
+    )} ETH including buffer; current balance is ${ethers.formatEther(
+      deployerBalanceBefore,
+    )} ETH.`,
+  );
+}
+
 console.log("Deploying eligibility registry...");
 const registry = await ethers.deployContract("WalletEligibilityRegistry", [
   owner,
@@ -101,6 +151,10 @@ if (
 const manifest = {
   chainId: Number(network.chainId),
   deployer: deployer.address,
+  deployerBalanceBeforeEth: ethers.formatEther(deployerBalanceBefore),
+  estimatedDeploymentCostWithBufferEth: ethers.formatEther(
+    estimatedDeploymentCost,
+  ),
   owner,
   registryAddress,
   vaultAddress,
