@@ -1,19 +1,20 @@
 # Challenge 02 prediction vault
 
 `AgentPredictionVault` is a single-round, native-token pari-mutuel pool for a
-three-hour AgentsInHood battle. The current build targets Robinhood Chain Testnet
-only. Testnet ETH has no monetary value.
+three-hour AgentsInHood battle. The source supports Robinhood Chain Testnet and a
+separately gated Robinhood Chain mainnet deployment. No mainnet contract is
+deployed by this repository.
 
 ## Lifecycle
 
 1. `Scheduled` — the contract exists but the battle has not started.
-2. `Open` — for one hour, participants can add stake, move their complete
-   position to another agent, or withdraw any amount.
+2. `Open` — for one hour, eligible participants can add stake, move their complete
+   position to another agent, or withdraw any valid amount.
 3. `Locked` — for two hours, no position can change.
-4. `AwaitingResolution` — the challenge is over and the evidence can be
-   published.
-5. `Resolved` — winner backers independently claim their share.
-6. `Cancelled` — every participant independently claims an exact refund.
+4. `AwaitingResolution` — the owner multisig publishes a winner and evidence hash.
+5. `Result review` — the proposal remains public for the immutable dispute period.
+6. `Resolved` — after review, anyone can finalize and winner backers claim.
+7. `Cancelled` — every participant independently claims an exact refund.
 
 The payout for a winning position is:
 
@@ -21,23 +22,27 @@ The payout for a winning position is:
 complete round pool × individual winning stake ÷ all winning stake
 ```
 
-Claims reduce both the remaining pool and remaining winning stake. This makes
-the final winning claim collect any integer-division dust, so the entire tracked
-pool is distributed without iterating over participant addresses.
+Claims reduce both the remaining pool and remaining winning stake. The last
+winning claim collects any integer-division dust, so the tracked pool is fully
+distributed without iterating over participant addresses.
 
-## Security properties in the prototype
+## Contract-enforced protections
 
 - OpenZeppelin `Ownable2Step` and `ReentrancyGuard`.
+- Immutable minimum stake, per-wallet maximum, total-pool cap, and dispute time.
+- Optional wallet-eligibility registry that stores only an address-level boolean.
 - No owner withdrawal, sweep, or drain function.
-- Direct token transfers are rejected; stake enters through `placeBet`.
+- Direct transfers are rejected; tracked stake enters through `placeBet`.
 - Checks-effects-interactions and participant-initiated pull payments.
-- The result cannot be published before the three-hour end timestamp.
-- A non-zero evidence hash is required for resolution or cancellation.
-- Ownership cannot be renounced while a round may still require resolution.
+- Result publication cannot begin before the three-hour end timestamp.
+- A non-zero evidence hash is mandatory for proposal, retraction, or cancellation.
+- A matured result proposal cannot be retracted or cancelled; anyone can finalize it.
+- Ownership cannot be renounced while a round may still need resolution.
 - An unbacked winner automatically puts the round into exact-refund mode.
 
-The owner is still a trusted result publisher in this prototype. That is an
-explicit testnet limitation, not a decentralized oracle claim.
+The owner multisig remains a trusted result proposer and emergency canceller before
+a proposal matures. The evidence hash and dispute period make that authority
+observable; they do not turn the mechanism into a decentralized oracle.
 
 ## Local verification
 
@@ -48,15 +53,13 @@ npm run build
 npm run typecheck
 ```
 
-The test suite covers open-window mutations, the lock boundary, owner
-authorization, proportional payouts, double-claim prevention, exact refunds,
-direct-transfer rejection, ownership safety, and mandatory evidence.
+The suite covers timing boundaries, stake and pool limits, eligibility,
+authorization, proposal review, proportional payouts, exact refunds, direct
+transfer rejection, and ownership safety.
 
-## Robinhood Chain Testnet deployment
+## Testnet deployment
 
-Use a dedicated test-only wallet. Never reuse the Railway worker key.
-
-Store the deployer key with Hardhat's encrypted keystore:
+Use a dedicated test-only wallet:
 
 ```powershell
 npx hardhat keystore set PREDICTION_DEPLOYER_PRIVATE_KEY
@@ -65,29 +68,31 @@ $env:PREDICTION_START_DELAY_SECONDS="900"
 npm run deploy:testnet
 ```
 
-The deployer needs testnet ETH for gas. Save the printed contract address and
-timestamps, confirm the bytecode on the testnet explorer, then configure Vercel:
+Testnet defaults are configurable through the `PREDICTION_MINIMUM_STAKE_ETH`,
+`PREDICTION_MAXIMUM_STAKE_ETH`, `PREDICTION_MAXIMUM_POOL_ETH`, and
+`PREDICTION_DISPUTE_SECONDS` environment variables.
 
-```env
-NEXT_PUBLIC_PREDICTION_VAULT_ADDRESS=0x...
-```
+## Publishing and finalizing a result
 
-The public interface will then read the pool and submit participant
-transactions directly from `/predict`.
-
-## Publishing the result
-
-Create an immutable result artifact containing the final agent scores, end
-timestamp, source API response, and the exact code commit. Publish the artifact,
-calculate its `bytes32` hash, and resolve only after verifying the values:
+Publish an immutable evidence artifact containing the final scores, end timestamp,
+source response, and exact code commit. Hash the artifact and propose it:
 
 ```powershell
-$env:ROBINHOOD_TESTNET_RPC_URL="https://rpc.testnet.chain.robinhood.com"
 $env:PREDICTION_VAULT_ADDRESS="0x..."
 $env:PREDICTION_WINNER_ID="0"
 $env:PREDICTION_EVIDENCE_HASH="0x..."
-npm run resolve:testnet
+npm run propose:testnet
 ```
+
+After the printed review deadline, anyone can run:
+
+```powershell
+npm run finalize:testnet
+```
+
+If the result cannot be established, the owner can use `npm run cancel:testnet`
+before a proposal matures. Cancellation enables participant refunds; it never
+transfers the pool to the owner.
 
 Agent IDs are stable:
 
@@ -99,23 +104,13 @@ Agent IDs are stable:
 | 3 | Claude Opus 4.8 |
 | 4 | Fable 5 |
 
-If the final result cannot be established, use the same evidence process and
-`npm run cancel:testnet` after the round ends. Cancellation enables participant
-refunds; it does not transfer the pool to the owner.
+## Mainnet preparation
 
-## Mainnet is a new project gate
+The mainnet scripts enforce chain ID `4663`, a contract-based owner, a separate
+deployment signer, a deployed eligibility registry, explicit immutable limits, at
+least 24 hours of notice, at least one hour of result review, and an exact launch
+acknowledgement. The frontend adds an independent launch lock.
 
-Do not add a `robinhoodMainnet` network and redeploy this prototype unchanged.
-A real-value proposal needs, at minimum:
-
-1. applicable Portuguese and target-market legal/licensing approval;
-2. an independent audit of the final bytecode and frontend;
-3. a reviewed resolution mechanism, such as an oracle or a multisig with a
-   published scoring artifact and dispute procedure;
-4. production RPC and monitoring rather than the rate-limited public endpoint;
-5. incident, cancellation, recovery, and participant-support procedures;
-6. explicit asset, minimum/maximum stake, geographic, and eligibility rules;
-7. a fresh deployment, verified source, multisig owner, and end-to-end test run.
-
-Only after those gates should a separately reviewed mainnet configuration and
-deployment script be added.
+These controls do not replace independent audit or legal/licensing requirements.
+The project owner must perform all irreversible transactions. Follow
+[`MAINNET_LAUNCH_RUNBOOK.md`](MAINNET_LAUNCH_RUNBOOK.md) without skipping gates.

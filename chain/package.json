@@ -9,8 +9,16 @@
     "test": "hardhat test",
     "typecheck": "tsc --noEmit",
     "deploy:testnet": "hardhat run scripts/deploy.ts --network robinhoodTestnet",
-    "resolve:testnet": "hardhat run scripts/resolve.ts --network robinhoodTestnet",
-    "cancel:testnet": "hardhat run scripts/cancel.ts --network robinhoodTestnet"
+    "propose:testnet": "hardhat run scripts/resolve.ts --network robinhoodTestnet",
+    "finalize:testnet": "hardhat run scripts/finalize.ts --network robinhoodTestnet",
+    "cancel:testnet": "hardhat run scripts/cancel.ts --network robinhoodTestnet",
+    "deploy-registry:mainnet": "hardhat run scripts/deploy-registry-mainnet.ts --network robinhoodMainnet",
+    "deploy:mainnet": "hardhat run scripts/deploy-mainnet.ts --network robinhoodMainnet",
+    "preflight:mainnet": "hardhat run scripts/preflight-mainnet.ts --network robinhoodMainnet",
+    "encode:eligibility": "tsx scripts/encode-eligibility.ts",
+    "propose:mainnet": "hardhat run scripts/resolve.ts --network robinhoodMainnet",
+    "finalize:mainnet": "hardhat run scripts/finalize.ts --network robinhoodMainnet",
+    "cancel:mainnet": "hardhat run scripts/cancel.ts --network robinhoodMainnet"
   },
   "dependencies": {
     "@openzeppelin/contracts": "5.6.1"
@@ -27,6 +35,7 @@
     "ethers": "6.17.0",
     "hardhat": "3.11.1",
     "mocha": "^11.7.5",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }
