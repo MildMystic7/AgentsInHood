@@ -174,11 +174,60 @@ async function loadMainnetState(): Promise<MainnetState> {
 }
 
 async function saveMainnetState(state: MainnetState): Promise<void> {
-  state.trades = state.trades.slice(-200);
+  // Cooldown rejections can arrive many times per minute because all five
+  // agents share one executor. Keep a small diagnostic tail without allowing
+  // those routine rejections to evict confirmed, independently verifiable
+  // transactions from the public audit history.
+  const material = state.trades
+    .filter((trade) => trade.status !== "rejected")
+    .slice(-500);
+  const recentRejections = state.trades
+    .filter((trade) => trade.status === "rejected")
+    .slice(-50);
+  state.trades = [...material, ...recentRejections].sort(
+    (left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt),
+  );
   memoryState = state;
   const activeStateKey = scopedKey(STATE_KEY);
   memoryStateKey = activeStateKey;
   if (kvConfigured()) await kvSet(activeStateKey, JSON.stringify(state));
+}
+
+function auditRecoveryTrades(): MainnetTradeRecord[] {
+  const raw = process.env.MAINNET_AUDIT_TRADES_JSON;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as MainnetTradeRecord[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (trade) =>
+        trade &&
+        typeof trade.id === "string" &&
+        typeof trade.agentId === "string" &&
+        (trade.action === "BUY" || trade.action === "SELL") &&
+        typeof trade.symbol === "string" &&
+        Number.isInteger(trade.usdCents) &&
+        trade.usdCents >= 1 &&
+        trade.status === "confirmed" &&
+        typeof trade.txHash === "string" &&
+        /^0x[0-9a-fA-F]{64}$/.test(trade.txHash) &&
+        Number.isFinite(Date.parse(trade.createdAt)),
+    );
+  } catch {
+    return [];
+  }
+}
+
+function mergeAuditTrades(
+  stateTrades: MainnetTradeRecord[],
+): MainnetTradeRecord[] {
+  const byTransaction = new Map<string, MainnetTradeRecord>();
+  for (const trade of [...auditRecoveryTrades(), ...stateTrades]) {
+    byTransaction.set(trade.txHash || trade.id, trade);
+  }
+  return [...byTransaction.values()].sort(
+    (left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt),
+  );
 }
 
 function runExclusive<T>(fn: () => Promise<T>): Promise<T> {
@@ -847,7 +896,7 @@ export async function getPublicMainnetStatus(): Promise<{
     minSecondsBetweenTrades: envInt("MAINNET_MIN_SECONDS_BETWEEN_TRADES", 600),
     maxPriceImpactPercent: envNumber("MAINNET_MAX_PRICE_IMPACT_PERCENT", 10),
     slippagePercent: envNumber("MAINNET_SLIPPAGE_PERCENT", 10),
-    trades: [...state.trades].reverse().slice(0, 50),
+    trades: mergeAuditTrades(state.trades).reverse().slice(0, 50),
   };
 }
 

@@ -80,6 +80,11 @@ before broadcasting and are not refunded automatically after a failed attempt.
 Telegram credentials belong only to this Railway worker. Dry-run plans never trigger messages;
 only confirmed mainnet executions with Blockscout proof are published.
 
+Confirmed and failed execution records are retained separately from the short diagnostic tail of
+routine cooldown rejections, so agent activity cannot evict verifiable transactions from the
+public audit feed. `MAINNET_AUDIT_TRADES_JSON` can merge independently verified legacy records
+into that feed after an operational recovery; it must contain public transaction data only.
+
 ## One-hour monitored smoke test
 
 `npm run one-hour-live-test` is a deliberately constrained operational test, not an autonomous
