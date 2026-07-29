@@ -1257,6 +1257,10 @@ export default function PredictPage() {
         >
           Inspect contract source <ArrowUpRight size={11} />
         </a>
+        {" · "}
+        <a href="/predict/rules">
+          Round rules and risk <ArrowUpRight size={11} />
+        </a>
         <br />
         The published result evidence hash and all vault movements remain visible
         on-chain. Users claim their own payout; the operator cannot withdraw the pool.

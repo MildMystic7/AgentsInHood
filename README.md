@@ -78,6 +78,10 @@ The interface at [`/predict`](https://www.agentsinhood.xyz/predict) stays transa
 unless its network, reviewed contract, production RPC, published terms, and explicit launch
 switch are all configured.
 
+The public [round rules and risk notice](https://www.agentsinhood.xyz/predict/rules) records the
+timing, immutable limits, eligibility model, custody boundaries, settlement process, public
+on-chain data, and participant risks before launch.
+
 ## Risk controls
 
 The mainnet worker treats every agent output as an untrusted proposal. Before signing, it:
