@@ -25,8 +25,26 @@ if (owner.toLowerCase() === deployer.address.toLowerCase()) {
   throw new Error("The registry owner must be separate from the deployment signer.");
 }
 
-const registry = await ethers.deployContract("WalletEligibilityRegistry", [owner]);
+const eligibleAccounts = (process.env.PREDICTION_INITIAL_ELIGIBLE_ACCOUNTS ?? "")
+  .split(",")
+  .map((account) => account.trim())
+  .filter(Boolean);
+if (
+  eligibleAccounts.length === 0 ||
+  eligibleAccounts.length > 100 ||
+  eligibleAccounts.some((account) => !ethers.isAddress(account))
+) {
+  throw new Error(
+    "PREDICTION_INITIAL_ELIGIBLE_ACCOUNTS must contain 1-100 valid addresses.",
+  );
+}
+
+const registry = await ethers.deployContract("WalletEligibilityRegistry", [
+  owner,
+  eligibleAccounts,
+]);
 await registry.waitForDeployment();
 
 console.log(`Eligibility registry: ${await registry.getAddress()}`);
 console.log(`Registry owner: ${owner}`);
+console.log(`Initially eligible wallets: ${eligibleAccounts.length}`);

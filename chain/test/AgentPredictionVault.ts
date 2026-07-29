@@ -16,6 +16,7 @@ async function deployVaultWithRegistry(restricted: boolean) {
 
   const registry = await ethers.deployContract("WalletEligibilityRegistry", [
     owner.address,
+    [],
   ]);
   await registry.waitForDeployment();
   await registry.setEligibilityBatch(
@@ -282,13 +283,13 @@ describe("WalletEligibilityRegistry", function () {
     const [owner, nextOwner, alice] = await ethers.getSigners();
     const registry = await ethers.deployContract("WalletEligibilityRegistry", [
       owner.address,
+      [alice.address],
     ]);
     await registry.waitForDeployment();
 
     await expect(registry.connect(alice).setEligibility(alice.address, true))
       .to.be.revertedWithCustomError(registry, "OwnableUnauthorizedAccount")
       .withArgs(alice.address);
-    await registry.setEligibility(alice.address, true);
     expect(await registry.isEligible(alice.address)).to.equal(true);
 
     await registry.transferOwnership(nextOwner.address);

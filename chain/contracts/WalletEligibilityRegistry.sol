@@ -18,7 +18,16 @@ contract WalletEligibilityRegistry is Ownable2Step {
 
     event EligibilityUpdated(address indexed account, bool eligible);
 
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    constructor(
+        address initialOwner,
+        address[] memory initiallyEligible
+    ) Ownable(initialOwner) {
+        uint256 length = initiallyEligible.length;
+        if (length > MAX_BATCH_SIZE) revert BatchTooLarge();
+        for (uint256 index = 0; index < length; ++index) {
+            _setEligibility(initiallyEligible[index], true);
+        }
+    }
 
     function isEligible(address account) external view returns (bool) {
         return _eligibility[account];

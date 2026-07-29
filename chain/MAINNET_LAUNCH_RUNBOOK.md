@@ -25,36 +25,34 @@ Any failed or unclear item is a stop condition.
 
 ## Gate 2 — separate authority
 
-1. Create a Robinhood Chain mainnet Safe multisig with at least two independent
-   signers and a threshold greater than one.
+1. Create a reviewed contract-based owner on Robinhood Chain mainnet, preferably
+   a Safe/multisig with at least two independent signers and a threshold greater
+   than one. A reviewed programmable wallet may be used only if it matches the
+   written operating approval.
 2. Fund a separate, single-use deployment wallet with gas only.
 3. Never use the arena worker key, a participant wallet, or the Safe signer seed
    as the deployment key.
-4. Record the Safe address as `PREDICTION_OWNER_ADDRESS`. The deployment scripts
-   reject an EOA owner and reject an owner equal to the deployer.
+4. Record that contract address as `PREDICTION_OWNER_ADDRESS`. The deployment
+   scripts reject an EOA owner and reject an owner equal to the deployer.
 
 The Safe controls eligibility and result publication. It cannot withdraw, sweep,
 or drain participant funds from the vault.
 
 ## Gate 3 — local protected configuration
 
-From `chain/`, store the deployment key in Hardhat's encrypted keystore:
-
-```powershell
-npx hardhat keystore set PREDICTION_MAINNET_DEPLOYER_PRIVATE_KEY
-```
-
-Set the non-secret launch values in the same terminal:
+From `chain/`, set the non-secret launch values in the same terminal:
 
 ```powershell
 $env:ROBINHOOD_MAINNET_RPC_URL="https://your-production-rpc"
 $env:PREDICTION_MAINNET_LAUNCH_ACK="I_HAVE_WRITTEN_APPROVAL_AND_ACCEPT_MAINNET_RISK"
 $env:PREDICTION_OWNER_ADDRESS="0xSAFE..."
+$env:PREDICTION_INITIAL_ELIGIBLE_ACCOUNTS="0xA...,0xB..."
 $env:PREDICTION_START_DELAY_SECONDS="86400"
 $env:PREDICTION_DISPUTE_SECONDS="3600"
-$env:PREDICTION_MINIMUM_STAKE_ETH="0.001"
-$env:PREDICTION_MAXIMUM_STAKE_PER_WALLET_ETH="0.05"
-$env:PREDICTION_MAXIMUM_POOL_ETH="0.5"
+$env:PREDICTION_MINIMUM_STAKE_ETH="0.0001"
+$env:PREDICTION_MAXIMUM_STAKE_PER_WALLET_ETH="0.005"
+$env:PREDICTION_MAXIMUM_POOL_ETH="0.05"
+$env:PREDICTION_TERMS_URL="https://www.agentsinhood.xyz/predict/rules"
 ```
 
 Use a production RPC. The public Robinhood endpoint is rate-limited and is not
@@ -62,8 +60,23 @@ the production default for the website or deployment scripts.
 
 ## Gate 4 — final launch transactions
 
-These commands spend real gas and create immutable mainnet contracts. They are
-intentionally not run during preparation.
+The prepared launcher validates readiness, runs the complete test suite, compiles
+the reviewed source, asks for the single-use deployer key without writing it to
+disk, and deploys both contracts. It is intentionally not run during preparation.
+
+From `chain/`, the owner performs one final command:
+
+```powershell
+.\launch-mainnet.ps1
+```
+
+The script asks for any missing RPC, owner, eligibility, and key values and
+requires the exact phrase `LAUNCH MAINNET`. It leaves the website switch disabled
+and prints a public deployment manifest. Preserve that manifest and never share
+the private key.
+
+The individual commands below remain available for recovery or an independently
+reviewed manual launch:
 
 1. Deploy the eligibility registry:
 

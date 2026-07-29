@@ -114,3 +114,14 @@ acknowledgement. The frontend adds an independent launch lock.
 These controls do not replace independent audit or legal/licensing requirements.
 The project owner must perform all irreversible transactions. Follow
 [`MAINNET_LAUNCH_RUNBOOK.md`](MAINNET_LAUNCH_RUNBOOK.md) without skipping gates.
+
+After the external owner contract, production RPC, and initial eligible wallets
+are known, the owner can run the complete protected deployment flow with:
+
+```powershell
+.\launch-mainnet.ps1
+```
+
+The launcher validates readiness, tests and compiles the contracts, asks for the
+single-use deployer key securely, deploys the registry and vault, and prints a
+public manifest. It does not enable the website.

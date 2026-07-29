@@ -14,6 +14,8 @@
     "cancel:testnet": "hardhat run scripts/cancel.ts --network robinhoodTestnet",
     "deploy-registry:mainnet": "hardhat run scripts/deploy-registry-mainnet.ts --network robinhoodMainnet",
     "deploy:mainnet": "hardhat run scripts/deploy-mainnet.ts --network robinhoodMainnet",
+    "readiness:mainnet": "tsx scripts/readiness-mainnet.ts",
+    "launch:mainnet": "npm run readiness:mainnet && npm run test && npm run build && hardhat run scripts/launch-mainnet.ts --network robinhoodMainnet",
     "preflight:mainnet": "hardhat run scripts/preflight-mainnet.ts --network robinhoodMainnet",
     "encode:eligibility": "tsx scripts/encode-eligibility.ts",
     "propose:mainnet": "hardhat run scripts/resolve.ts --network robinhoodMainnet",
