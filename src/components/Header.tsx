@@ -154,6 +154,7 @@ const NAV = [
   ["#reasoning", "AI Reasoning"],
   ["#how", "How It Works"],
   ["/challenge", "Challenge"],
+  ["/predict", "Predict"],
   ["/verify", "Verify"],
   ["/docs", "Docs"],
 ];
