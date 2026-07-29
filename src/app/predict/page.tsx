@@ -1060,7 +1060,7 @@ export default function PredictPage() {
             <div className="value">{PREDICTION_CHAIN.name}</div>
           </Fact>
           <Fact>
-            <div className="label">Vault balance</div>
+            <div className="label">Round pool</div>
             <div className="value mono">{eth(snapshot?.totalPool ?? 0n)}</div>
           </Fact>
           <Fact>

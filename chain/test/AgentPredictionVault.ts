@@ -176,4 +176,27 @@ describe("AgentPredictionVault", function () {
     );
     expect(operatorWithdrawal).to.equal(undefined);
   });
+
+  it("cannot be orphaned and requires result evidence", async function () {
+    const { vault, startsAt, challengeEndsAt } =
+      await networkHelpers.loadFixture(deployVault);
+
+    await expect(vault.renounceOwnership()).to.be.revertedWithCustomError(
+      vault,
+      "OwnershipRenunciationDisabled",
+    );
+
+    await time.increaseTo(startsAt);
+    await vault.placeBet(0, { value: ethers.parseEther("1") });
+    await time.increaseTo(challengeEndsAt);
+
+    await expect(vault.resolve(0, ethers.ZeroHash)).to.be.revertedWithCustomError(
+      vault,
+      "InvalidEvidence",
+    );
+    await expect(vault.cancel(ethers.ZeroHash)).to.be.revertedWithCustomError(
+      vault,
+      "InvalidEvidence",
+    );
+  });
 });

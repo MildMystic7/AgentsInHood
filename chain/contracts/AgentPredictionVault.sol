@@ -53,6 +53,7 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
     error BettingStillOpen();
     error ChallengeStillRunning();
     error InvalidAgent();
+    error InvalidEvidence();
     error InvalidStartTime();
     error NoStake();
     error PositionAlreadyClaimed();
@@ -63,6 +64,7 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
     error TransferFailed();
     error WinningAgentRequired();
     error DirectTransferDisabled();
+    error OwnershipRenunciationDisabled();
 
     event BetPlaced(
         address indexed account,
@@ -156,6 +158,7 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
     function resolve(uint8 winner, bytes32 evidenceHash) external onlyOwner {
         if (block.timestamp < challengeEndsAt) revert ChallengeStillRunning();
         if (settlement != Settlement.Unresolved) revert RoundAlreadySettled();
+        if (evidenceHash == bytes32(0)) revert InvalidEvidence();
         _validateAgent(winner);
 
         resultEvidenceHash = evidenceHash;
@@ -179,6 +182,7 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
     function cancel(bytes32 evidenceHash) external onlyOwner {
         if (block.timestamp < challengeEndsAt) revert ChallengeStillRunning();
         if (settlement != Settlement.Unresolved) revert RoundAlreadySettled();
+        if (evidenceHash == bytes32(0)) revert InvalidEvidence();
 
         settlement = Settlement.Cancelled;
         resultEvidenceHash = evidenceHash;
@@ -243,6 +247,11 @@ contract AgentPredictionVault is Ownable2Step, ReentrancyGuard {
 
     function allAgentPools() external view returns (uint256[AGENT_COUNT] memory) {
         return _agentPools;
+    }
+
+    /// @dev A round must always retain a resolver until it is settled.
+    function renounceOwnership() public pure override {
+        revert OwnershipRenunciationDisabled();
     }
 
     function _validateAgent(uint8 agentId) private pure {
